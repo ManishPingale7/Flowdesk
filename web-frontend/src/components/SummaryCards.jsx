@@ -1,25 +1,48 @@
+import './SummaryCards.css'
+
 const SummaryCards = ({ summary }) => {
+  const cards = [
+    {
+      label: 'Total Equipment',
+      value: summary.total_count,
+      color: 'var(--primary)',
+      icon: '📊'
+    },
+    {
+      label: 'Avg Flowrate',
+      value: summary.avg_flowrate.toFixed(2),
+      color: 'var(--accent)',
+      icon: '💧'
+    },
+    {
+      label: 'Avg Pressure',
+      value: summary.avg_pressure.toFixed(2),
+      color: 'var(--warning)',
+      icon: '⚡'
+    },
+    {
+      label: 'Avg Temperature',
+      value: summary.avg_temperature.toFixed(2),
+      color: 'var(--danger)',
+      icon: '🌡️'
+    }
+  ]
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-      <div className="card" style={{ textAlign: 'center' }}>
-        <h3 style={{ color: '#666', marginBottom: '10px' }}>Total Equipment</h3>
-        <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#007bff' }}>{summary.total_count}</p>
-      </div>
-      <div className="card" style={{ textAlign: 'center' }}>
-        <h3 style={{ color: '#666', marginBottom: '10px' }}>Avg Flowrate</h3>
-        <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#28a745' }}>{summary.avg_flowrate.toFixed(2)}</p>
-      </div>
-      <div className="card" style={{ textAlign: 'center' }}>
-        <h3 style={{ color: '#666', marginBottom: '10px' }}>Avg Pressure</h3>
-        <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffc107' }}>{summary.avg_pressure.toFixed(2)}</p>
-      </div>
-      <div className="card" style={{ textAlign: 'center' }}>
-        <h3 style={{ color: '#666', marginBottom: '10px' }}>Avg Temperature</h3>
-        <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#dc3545' }}>{summary.avg_temperature.toFixed(2)}</p>
-      </div>
+    <div className="summary-cards">
+      {cards.map((card, index) => (
+        <div key={index} className="summary-card" style={{ '--card-color': card.color }}>
+          <div className="summary-card-icon">{card.icon}</div>
+          <div className="summary-card-content">
+            <div className="summary-card-label">{card.label}</div>
+            <div className="summary-card-value" style={{ color: card.color }}>
+              {card.value}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
 
 export default SummaryCards
-

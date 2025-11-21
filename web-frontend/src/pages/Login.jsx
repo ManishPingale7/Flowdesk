@@ -15,7 +15,7 @@ const Login = ({ onLogin }) => {
 
     try {
       const auth = btoa(`${username}:${password}`)
-      const response = await axios.get('http://localhost:8000/api/summary/', {
+      const response = await axios.get('http://localhost:8000/api/history/', {
         headers: {
           'Authorization': `Basic ${auth}`
         }
