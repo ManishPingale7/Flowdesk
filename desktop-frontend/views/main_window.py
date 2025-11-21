@@ -390,13 +390,21 @@ class MainWindow(QMainWindow):
         
         self.chart_canvas.figure.clear()
         
+        try:
+            if self.is_dark:
+                plt.style.use('dark_background')
+            else:
+                try:
+                    plt.style.use('seaborn-v0_8-whitegrid')
+                except:
+                    plt.style.use('default')
+        except:
+            pass
+        
+        fig = self.chart_canvas.figure
         if self.is_dark:
-            plt.style.use('dark_background')
-            fig = self.chart_canvas.figure
             fig.patch.set_facecolor('#1e293b')
         else:
-            plt.style.use('seaborn-v0_8-whitegrid')
-            fig = self.chart_canvas.figure
             fig.patch.set_facecolor('#ffffff')
         
         ax1 = fig.add_subplot(121)
