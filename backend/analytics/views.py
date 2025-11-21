@@ -1,12 +1,13 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.http import HttpResponse, FileResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.contrib.auth.models import User
 from .models import Dataset
-from .serializers import DatasetSerializer, CSVUploadSerializer
+from .serializers import DatasetSerializer, CSVUploadSerializer, RegisterSerializer
 from .utils import parse_csv, compute_summary
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -20,6 +21,21 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    serializer = RegisterSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        user = serializer.save()
+        return Response({
+            'message': 'User registered successfully',
+            'username': user.username
+        }, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])

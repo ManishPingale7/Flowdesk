@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
-import Login from './pages/Login'
+import Auth from './pages/Auth'
 import Upload from './pages/Upload'
 import History from './pages/History'
 import './App.css'
@@ -35,18 +35,18 @@ function App() {
       <Router>
         <Routes>
           <Route 
-            path="/login" 
-            element={!isAuthenticated ? <Login onLogin={handleLogin} /> : <Navigate to="/upload" />} 
+            path="/auth" 
+            element={!isAuthenticated ? <Auth onLogin={handleLogin} /> : <Navigate to="/upload" />} 
           />
           <Route 
             path="/upload" 
-            element={isAuthenticated ? <Upload onLogout={handleLogout} /> : <Navigate to="/login" />} 
+            element={isAuthenticated ? <Upload onLogout={handleLogout} /> : <Navigate to="/auth" />} 
           />
           <Route 
             path="/history" 
-            element={isAuthenticated ? <History onLogout={handleLogout} /> : <Navigate to="/login" />} 
+            element={isAuthenticated ? <History onLogout={handleLogout} /> : <Navigate to="/auth" />} 
           />
-          <Route path="/" element={<Navigate to={isAuthenticated ? "/upload" : "/login"} />} />
+          <Route path="/" element={<Navigate to={isAuthenticated ? "/upload" : "/auth"} />} />
         </Routes>
       </Router>
     </ThemeProvider>

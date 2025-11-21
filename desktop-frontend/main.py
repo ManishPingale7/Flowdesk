@@ -1,15 +1,15 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 from views.main_window import MainWindow
-from views.login_dialog import LoginDialog
+from views.auth_dialog import AuthDialog
 
 
 def main():
     app = QApplication(sys.argv)
     
-    login_dialog = LoginDialog()
-    if login_dialog.exec_() == LoginDialog.Accepted:
-        username, password = login_dialog.get_credentials()
+    auth_dialog = AuthDialog()
+    if auth_dialog.exec_() == AuthDialog.Accepted:
+        username, password = auth_dialog.get_credentials()
         main_window = MainWindow(username, password)
         main_window.show()
         sys.exit(app.exec_())

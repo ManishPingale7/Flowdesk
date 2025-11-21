@@ -14,6 +14,32 @@ const getAuthHeader = () => {
   return {}
 }
 
+export const register = async (username, email, password) => {
+  const response = await axios.post(
+    `${API_BASE_URL}/register/`,
+    {
+      username,
+      email,
+      password,
+      password_confirm: password
+    }
+  )
+  return response.data
+}
+
+export const login = async (username, password) => {
+  const auth = btoa(`${username}:${password}`)
+  const response = await axios.get(
+    `${API_BASE_URL}/history/`,
+    {
+      headers: {
+        'Authorization': `Basic ${auth}`
+      }
+    }
+  )
+  return response.data
+}
+
 export const uploadCSV = async (file) => {
   const formData = new FormData()
   formData.append('file', file)

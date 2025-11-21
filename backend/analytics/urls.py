@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('register/', views.register, name='register'),
     path('upload/', views.upload_csv, name='upload_csv'),
     path('summary/', views.get_summary, name='get_summary'),
     path('history/', views.get_history, name='get_history'),

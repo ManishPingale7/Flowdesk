@@ -39,4 +39,16 @@ class APIClient:
         response.raise_for_status()
         with open(save_path, 'wb') as f:
             f.write(response.content)
+    
+    def register(self, username, email, password):
+        url = f"{self.base_url}/register/"
+        data = {
+            'username': username,
+            'email': email,
+            'password': password,
+            'password_confirm': password
+        }
+        response = requests.post(url, json=data)
+        response.raise_for_status()
+        return response.json()
 
