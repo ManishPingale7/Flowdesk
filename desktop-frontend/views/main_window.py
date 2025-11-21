@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QFileDialog, QTableWidget, QTableWidgetItem,
                              QLabel, QTabWidget, QListWidget, QListWidgetItem, QMessageBox,
                              QGridLayout, QFrame)
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSettings
 from PyQt5.QtGui import QFont, QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -18,12 +18,21 @@ class MainWindow(QMainWindow):
         self.current_summary = None
         self.setWindowTitle('Chemical Equipment Parameter Visualizer')
         self.setGeometry(100, 100, 1400, 900)
+        self.settings = QSettings('ChemViz', 'Theme')
+        self.is_dark = self.settings.value('dark_mode', False, type=bool)
         self.setup_styles()
         self.init_ui()
         self.load_summary()
     
     def setup_styles(self):
-        self.setStyleSheet("""
+        if self.is_dark:
+            stylesheet = self.get_dark_styles()
+        else:
+            stylesheet = self.get_light_styles()
+        self.setStyleSheet(stylesheet)
+    
+    def get_light_styles(self):
+        return """
             QMainWindow {
                 background-color: #f8fafc;
             }
@@ -152,13 +161,6 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         
         header = QFrame()
-        header.setStyleSheet("""
-            QFrame {
-                background: white;
-                border-bottom: 1px solid #e2e8f0;
-                padding: 20px 32px;
-            }
-        """)
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(0, 0, 0, 0)
         header.setLayout(header_layout)
@@ -169,7 +171,6 @@ class MainWindow(QMainWindow):
         title_font.setPointSize(20)
         title_font.setWeight(QFont.Bold)
         title.setFont(title_font)
-        title.setStyleSheet("color: #2563eb;")
         header_layout.addWidget(title)
         header_layout.addStretch()
         
@@ -182,15 +183,14 @@ class MainWindow(QMainWindow):
         refresh_btn.clicked.connect(self.load_summary)
         header_layout.addWidget(refresh_btn)
         
+        self.theme_btn = QPushButton('🌙' if not self.is_dark else '☀️')
+        self.theme_btn.setObjectName('secondary')
+        self.theme_btn.clicked.connect(self.toggle_theme)
+        header_layout.addWidget(self.theme_btn)
+        
         layout.addWidget(header)
         
         tabs = QTabWidget()
-        tabs.setStyleSheet("""
-            QTabWidget::pane {
-                border: none;
-                background: #f8fafc;
-            }
-        """)
         
         summary_tab = self.create_summary_tab()
         tabs.addTab(summary_tab, '📊 Summary')
@@ -390,18 +390,36 @@ class MainWindow(QMainWindow):
         
         self.chart_canvas.figure.clear()
         
-        plt.style.use('seaborn-v0_8-whitegrid')
-        fig = self.chart_canvas.figure
+        if self.is_dark:
+            plt.style.use('dark_background')
+            fig = self.chart_canvas.figure
+            fig.patch.set_facecolor('#1e293b')
+        else:
+            plt.style.use('seaborn-v0_8-whitegrid')
+            fig = self.chart_canvas.figure
+            fig.patch.set_facecolor('#ffffff')
+        
         ax1 = fig.add_subplot(121)
         ax2 = fig.add_subplot(122)
+        
+        if self.is_dark:
+            ax1.set_facecolor('#1e293b')
+            ax2.set_facecolor('#1e293b')
+            text_color = '#f1f5f9'
+        else:
+            text_color = '#1e293b'
         
         type_dist = self.current_summary['type_distribution']
         types = list(type_dist.keys())
         counts = list(type_dist.values())
         
         colors = ['#2563eb', '#7c3aed', '#10b981', '#f59e0b', '#ef4444']
-        ax1.pie(counts, labels=types, autopct='%1.1f%%', colors=colors[:len(types)], startangle=90)
-        ax1.set_title('Equipment Type Distribution', fontsize=14, fontweight='bold', pad=20)
+        if self.is_dark:
+            colors = ['#3b82f6', '#8b5cf6', '#10b981', '#fbbf24', '#f87171']
+        
+        ax1.pie(counts, labels=types, autopct='%1.1f%%', colors=colors[:len(types)], startangle=90,
+                textprops={'color': text_color, 'fontweight': 'bold'})
+        ax1.set_title('Equipment Type Distribution', fontsize=14, fontweight='bold', pad=20, color=text_color)
         
         stats = ['Flowrate', 'Pressure', 'Temperature']
         values = [
@@ -410,15 +428,17 @@ class MainWindow(QMainWindow):
             self.current_summary['avg_temperature']
         ]
         
-        bars = ax2.bar(stats, values, color=['#2563eb', '#10b981', '#f59e0b'])
-        ax2.set_title('Average Statistics', fontsize=14, fontweight='bold', pad=20)
-        ax2.set_ylabel('Value', fontweight='bold')
+        bar_colors = ['#2563eb', '#10b981', '#f59e0b'] if not self.is_dark else ['#3b82f6', '#10b981', '#fbbf24']
+        bars = ax2.bar(stats, values, color=bar_colors)
+        ax2.set_title('Average Statistics', fontsize=14, fontweight='bold', pad=20, color=text_color)
+        ax2.set_ylabel('Value', fontweight='bold', color=text_color)
+        ax2.tick_params(colors=text_color)
         ax2.grid(True, alpha=0.3, axis='y')
         
         for bar in bars:
             height = bar.get_height()
             ax2.text(bar.get_x() + bar.get_width()/2., height,
-                    f'{height:.2f}', ha='center', va='bottom', fontweight='bold')
+                    f'{height:.2f}', ha='center', va='bottom', fontweight='bold', color=text_color)
         
         fig.tight_layout()
         self.chart_canvas.draw()

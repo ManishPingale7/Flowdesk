@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTheme } from '../contexts/ThemeContext'
 import { getHistory } from '../services/api'
 import './History.css'
 
 const History = ({ onLogout }) => {
+  const { isDark, toggleTheme } = useTheme()
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -32,6 +34,9 @@ const History = ({ onLogout }) => {
         <div className="nav-links">
           <Link to="/upload">Upload</Link>
           <Link to="/history">History</Link>
+          <button onClick={toggleTheme} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
+            {isDark ? '☀️' : '🌙'}
+          </button>
           <button onClick={onLogout} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
             Logout
           </button>

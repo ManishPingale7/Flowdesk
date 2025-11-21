@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { uploadCSV, getSummary, downloadPDF } from '../services/api'
+import { useTheme } from '../contexts/ThemeContext'
 import EquipmentTable from '../components/EquipmentTable'
 import SummaryCards from '../components/SummaryCards'
 import Charts from '../components/Charts'
 import './Upload.css'
 
 const Upload = ({ onLogout }) => {
+  const { isDark, toggleTheme } = useTheme()
   const [file, setFile] = useState(null)
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -74,6 +76,9 @@ const Upload = ({ onLogout }) => {
           <Link to="/history">History</Link>
           <button onClick={handleDownloadPDF} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
             Download PDF
+          </button>
+          <button onClick={toggleTheme} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
+            {isDark ? '☀️' : '🌙'}
           </button>
           <button onClick={onLogout} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
             Logout
