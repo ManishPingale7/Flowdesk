@@ -145,26 +145,31 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-# Add production frontend URLs from environment variable
-if os.environ.get('FRONTEND_URL'):
-    frontend_urls = os.environ.get('FRONTEND_URL').split(',')
-    for url in frontend_urls:
-        url = url.strip()
-        if url and url not in CORS_ALLOWED_ORIGINS:
-            CORS_ALLOWED_ORIGINS.append(url)
-
-# For production: allow all origins if CORS_ALLOW_ALL is set
-if os.environ.get('CORS_ALLOW_ALL', 'False') == 'True':
+# Allow all origins if in DEBUG mode or CORS_ALLOW_ALL is set
+if DEBUG or os.environ.get('CORS_ALLOW_ALL', 'False') == 'True':
     CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS = []
 else:
     CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
+    # Add production frontend URLs from environment variable
+    if os.environ.get('FRONTEND_URL'):
+        frontend_urls = os.environ.get('FRONTEND_URL').split(',')
+        for url in frontend_urls:
+            url = url.strip()
+            if url and url not in CORS_ALLOWED_ORIGINS:
+                CORS_ALLOWED_ORIGINS.append(url)
+
+    # Allow Vercel preview deployments (they have random URLs)
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^https://.*\.vercel\.app$",
+    ]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
