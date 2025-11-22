@@ -2,14 +2,16 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QFileDialog, QTableWidget, QTableWidgetItem,
                              QLabel, QTabWidget, QListWidget, QListWidgetItem, QMessageBox,
                              QGridLayout, QFrame, QDialog, QApplication, QInputDialog, QLineEdit, QHeaderView,
-                             QScrollArea, QProgressBar)
+                             QScrollArea, QProgressBar, QStyle)
 from PyQt5.QtCore import Qt, QSettings, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont, QColor, QMovie
+from PyQt5.QtGui import QFont, QColor, QMovie, QPixmap, QPainter, QIcon
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from api_client import APIClient
 import matplotlib.pyplot as plt
 import random # For demo trend data
+import ctypes
+import sys
 
 
 class LoadingDialog(QDialog):
@@ -19,6 +21,7 @@ class LoadingDialog(QDialog):
         self.setModal(True)
         self.setFixedSize(300, 120)
         self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        self.set_dark_title_bar()
         
         layout = QVBoxLayout()
         layout.setContentsMargins(30, 30, 30, 30)
@@ -64,7 +67,24 @@ class LoadingDialog(QDialog):
                 border: 1px solid #27272a;
             }
         """)
+        
+        self.set_dark_title_bar()
     
+    def set_dark_title_bar(self):
+        try:
+            if sys.platform == "win32":
+                hwnd = int(self.winId())
+                DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+                value = ctypes.c_int(1)
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ctypes.byref(value), ctypes.sizeof(value))
+                
+                DWMWA_CAPTION_COLOR = 35
+                color = 0x00040202
+                color_value = ctypes.c_int(color)
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, ctypes.byref(color_value), ctypes.sizeof(color_value))
+        except Exception as e:
+            print(f"Failed to set dark title bar: {e}")
+
     def animate_dots(self):
         self.dot_count = (self.dot_count + 1) % 4
         self.dots_label.setText('.' * (self.dot_count + 1))
@@ -99,11 +119,43 @@ class MainWindow(QMainWindow):
         self.client.set_auth(username, password)
         self.current_summary = None
         self.setWindowTitle('Chemical Equipment Parameter Visualizer')
+        self.setWindowIcon(self.create_emoji_icon("🧪"))
         self.is_dark = True  # Enforce dark mode
         self.setup_styles()
+        self.set_dark_title_bar()
         self.init_ui()
         self.load_summary()
     
+    def set_dark_title_bar(self):
+        try:
+            # Windows 11/10 Dark Mode Title Bar
+            if sys.platform == "win32":
+                hwnd = int(self.winId())
+                # DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+                DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+                value = ctypes.c_int(1)
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ctypes.byref(value), ctypes.sizeof(value))
+                
+                # Also try to set the caption color directly for Windows 11 (DWMWA_CAPTION_COLOR = 35)
+                # Color format is 0x00BBGGRR. We want #020204 -> R=02, G=02, B=04 -> 0x00040202
+                DWMWA_CAPTION_COLOR = 35
+                color = 0x00040202
+                color_value = ctypes.c_int(color)
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, ctypes.byref(color_value), ctypes.sizeof(color_value))
+        except Exception as e:
+            print(f"Failed to set dark title bar: {e}")
+
+    def create_emoji_icon(self, emoji):
+        pixmap = QPixmap(64, 64)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        # Reduced font size to prevent clipping
+        font = QFont("Segoe UI Emoji", 40)
+        painter.setFont(font)
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, emoji)
+        painter.end()
+        return QIcon(pixmap)
+
     def setup_styles(self):
         stylesheet = self.get_dark_styles()
         self.setStyleSheet(stylesheet)

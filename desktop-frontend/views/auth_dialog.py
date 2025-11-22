@@ -1,7 +1,9 @@
+import ctypes
+import sys
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
-                             QPushButton, QMessageBox, QFrame, QStackedWidget, QWidget, QApplication)
+                             QPushButton, QMessageBox, QFrame, QStackedWidget, QWidget, QApplication, QStyle)
 from PyQt5.QtCore import Qt, QSettings, QTimer
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QPixmap, QPainter, QIcon, QColor
 from api_client import APIClient
 
 
@@ -12,6 +14,7 @@ class LoadingDialog(QDialog):
         self.setModal(True)
         self.setFixedSize(300, 120)
         self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        self.set_dark_title_bar()
         
         layout = QVBoxLayout()
         layout.setContentsMargins(30, 30, 30, 30)
@@ -54,6 +57,21 @@ class LoadingDialog(QDialog):
             }
         """)
     
+    def set_dark_title_bar(self):
+        try:
+            if sys.platform == "win32":
+                hwnd = int(self.winId())
+                DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+                value = ctypes.c_int(1)
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ctypes.byref(value), ctypes.sizeof(value))
+                
+                DWMWA_CAPTION_COLOR = 35
+                color = 0x00040202
+                color_value = ctypes.c_int(color)
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, ctypes.byref(color_value), ctypes.sizeof(color_value))
+        except Exception as e:
+            print(f"Failed to set dark title bar: {e}")
+    
     def animate_dots(self):
         self.dot_count = (self.dot_count + 1) % 4
         self.dots_label.setText('.' * (self.dot_count + 1))
@@ -67,12 +85,40 @@ class AuthDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Chemical Equipment Visualizer')
+        self.setWindowIcon(self.create_emoji_icon("🧪"))
         self.setFixedSize(550, 680)
         self.username = None
         self.password = None
         self.setup_styles()
+        self.set_dark_title_bar()
         self.init_ui()
     
+    def set_dark_title_bar(self):
+        try:
+            if sys.platform == "win32":
+                hwnd = int(self.winId())
+                DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+                value = ctypes.c_int(1)
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ctypes.byref(value), ctypes.sizeof(value))
+                
+                DWMWA_CAPTION_COLOR = 35
+                color = 0x00040202
+                color_value = ctypes.c_int(color)
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, ctypes.byref(color_value), ctypes.sizeof(color_value))
+        except Exception as e:
+            print(f"Failed to set dark title bar: {e}")
+
+    def create_emoji_icon(self, emoji):
+        pixmap = QPixmap(64, 64)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        # Reduced font size to prevent clipping
+        font = QFont("Segoe UI Emoji", 40)
+        painter.setFont(font)
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, emoji)
+        painter.end()
+        return QIcon(pixmap)
+
     def setup_styles(self):
         self.setStyleSheet("""
             QDialog {
