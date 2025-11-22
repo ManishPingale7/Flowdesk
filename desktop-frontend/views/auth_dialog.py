@@ -23,7 +23,7 @@ class LoadingDialog(QDialog):
             QLabel {
                 font-size: 15px;
                 font-weight: 500;
-                color: #1e293b;
+                color: #f1f5f9;
             }
         """)
         layout.addWidget(self.label)
@@ -34,7 +34,7 @@ class LoadingDialog(QDialog):
             QLabel {
                 font-size: 20px;
                 font-weight: bold;
-                color: #2563eb;
+                color: #f97316;
             }
         """)
         layout.addWidget(self.dots_label)
@@ -48,9 +48,9 @@ class LoadingDialog(QDialog):
         
         self.setStyleSheet("""
             QDialog {
-                background: white;
-                border-radius: 12px;
-                border: 2px solid #e2e8f0;
+                background: #09090b;
+                border-radius: 20px;
+                border: 1px solid #27272a;
             }
         """)
     
@@ -76,77 +76,81 @@ class AuthDialog(QDialog):
     def setup_styles(self):
         self.setStyleSheet("""
             QDialog {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #667eea, stop:1 #764ba2);
+                background: #020204;
             }
             QFrame#card {
-                background: white;
+                background: #09090b;
+                border: 1px solid #27272a;
                 border-radius: 20px;
             }
             QLabel {
-                color: #1e293b;
+                color: #a1a1aa;
             }
             QLabel#title {
                 font-size: 28px;
                 font-weight: 700;
-                color: #2563eb;
+                color: #fafafa;
                 background: transparent;
+                letter-spacing: -1px;
             }
             QLabel#subtitle {
-                color: #64748b;
+                color: #a1a1aa;
                 font-size: 15px;
                 font-weight: 400;
             }
             QLabel#field-label {
-                color: #1e293b;
+                color: #e4e4e7;
                 font-size: 13px;
                 font-weight: 600;
                 margin-bottom: 4px;
             }
             QLineEdit {
                 padding: 14px 18px;
-                border: 2px solid #e2e8f0;
+                border: 1px solid #27272a;
                 border-radius: 10px;
                 font-size: 15px;
-                background: white;
-                color: #1e293b;
+                background: #18181b;
+                color: #fafafa;
                 min-height: 20px;
             }
             QLineEdit:focus {
-                border-color: #2563eb;
+                border-color: #f97316;
+                background: #18181b;
                 outline: none;
             }
             QLineEdit::placeholder {
-                color: #94a3b8;
+                color: #71717a;
             }
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #2563eb, stop:1 #3b82f6);
-                color: white;
-                border: none;
-                border-radius: 10px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #18181b, stop:1 #09090b);
+                color: #fafafa;
+                border: 1px solid #27272a;
+                border-radius: 20px;
                 padding: 14px 28px;
                 font-weight: 600;
                 font-size: 16px;
                 min-height: 24px;
             }
             QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #1e40af, stop:1 #2563eb);
+                border-color: #f97316;
+                background: #27272a;
             }
             QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #1e3a8a, stop:1 #1e40af);
+                background: #3f3f46;
             }
             QPushButton#link {
                 background: transparent;
-                color: #2563eb;
+                color: #f97316;
                 font-weight: 600;
-                text-decoration: underline;
+                text-decoration: none;
                 padding: 4px;
+                border: none;
             }
             QPushButton#link:hover {
-                color: #1e40af;
+                color: #fb923c;
+                text-decoration: underline;
+                border: none;
+                background: transparent;
             }
         """)
     
@@ -171,7 +175,7 @@ class AuthDialog(QDialog):
         title.setAlignment(Qt.AlignCenter)
         title_font = QFont('Segoe UI', 24, QFont.Bold)
         title.setFont(title_font)
-        title.setStyleSheet("color: #2563eb;")
+        # title.setStyleSheet("color: #2563eb;") # Removed to let stylesheet handle it
         header.addWidget(title)
         
         self.subtitle = QLabel('Welcome back!')
@@ -199,13 +203,11 @@ class AuthDialog(QDialog):
     def create_login_widget(self):
         widget = QWidget()
         layout = QVBoxLayout()
-        layout.setSpacing(10)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignTop)
+        layout.setSpacing(16)
         widget.setLayout(layout)
         
         username_container = QVBoxLayout()
-        username_container.setSpacing(0)
+        username_container.setSpacing(6)
         
         username_label = QLabel('Username')
         username_label.setObjectName('field-label')
@@ -220,7 +222,7 @@ class AuthDialog(QDialog):
         layout.addLayout(username_container)
         
         password_container = QVBoxLayout()
-        password_container.setSpacing(0)
+        password_container.setSpacing(6)
         
         password_label = QLabel('Password')
         password_label.setObjectName('field-label')
@@ -235,14 +237,12 @@ class AuthDialog(QDialog):
         
         layout.addLayout(password_container)
         
-        layout.addSpacing(6)
-
         login_btn = QPushButton('Login')
         login_btn.clicked.connect(self.handle_login)
         login_btn.setCursor(Qt.PointingHandCursor)
         layout.addWidget(login_btn)
         
-        layout.addSpacing(10)
+        layout.addSpacing(16)
         
         footer = QHBoxLayout()
         footer.addStretch()
@@ -257,7 +257,6 @@ class AuthDialog(QDialog):
         footer.addStretch()
         
         layout.addLayout(footer)
-        layout.addStretch()
         
         return widget
     

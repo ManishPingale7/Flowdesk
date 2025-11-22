@@ -85,9 +85,6 @@ const Upload = ({ onLogout }) => {
           <button onClick={handleDownloadPDF} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
             Download PDF
           </button>
-          <button onClick={toggleTheme} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
-            {isDark ? '☀️' : '🌙'}
-          </button>
           <button onClick={onLogout} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
             Logout
           </button>
@@ -115,14 +112,10 @@ const Upload = ({ onLogout }) => {
         {summary && (
           <>
             <SummaryCards summary={summary} />
-            <div className="card">
-              <h2>Equipment Data</h2>
-              <EquipmentTable data={summary.equipment_data} />
-            </div>
-            <div className="card">
-              <h2>Charts</h2>
+            <div style={{ marginBottom: '32px' }}>
               <Charts summary={summary} />
             </div>
+            <EquipmentTable data={summary.equipment_data} />
           </>
         )}
 

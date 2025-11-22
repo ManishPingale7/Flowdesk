@@ -1,0 +1,81 @@
+.landing-page {
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  color: var(--text-heading);
+  font-family: var(--font-body);
+}
+
+.landing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(9, 9, 11, 0.7);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  background: var(--accent-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-heading);
+  letter-spacing: -0.025em;
+}
+
+.btn-login {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  color: var(--text-heading);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.btn-login:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-glass-hover);
+}
+
+.hero-section {
+  padding: 120px 20px 60px;
+  text-align: center;
+}
+
+.hero-section h1 {
+  font-family: var(--font-heading);
+  font-size: 3.5rem; /* >48px */
+  font-weight: 600;
+  margin-bottom: 16px;
+  background: linear-gradient(to bottom, #ffffff, #94a3b8);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.025em; /* tracking-tight */
+}
+
+.hero-section p {
+  font-size: 1.25rem;
+  color: var(--text-body);
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.features-section {
+  padding: 40px 20px 100px;
+  display: flex;
+  justify-content: center;
+}
+

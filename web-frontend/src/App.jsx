@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
+import Landing from './pages/Landing'
 import Auth from './pages/Auth'
 import Upload from './pages/Upload'
 import History from './pages/History'
@@ -34,6 +35,7 @@ function App() {
     <ThemeProvider>
       <Router>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route 
             path="/auth" 
             element={!isAuthenticated ? <Auth onLogin={handleLogin} /> : <Navigate to="/upload" />} 

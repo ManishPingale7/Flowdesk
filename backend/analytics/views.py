@@ -161,15 +161,31 @@ def generate_pdf_report(request):
     elements.append(summary_heading)
     elements.append(Spacer(1, 0.15*inch))
     
+    # Calculate Min/Max
+    equipment_data = summary.get('equipment_data', [])
+    min_flow = max_flow = min_press = max_press = min_temp = max_temp = 0
+    
+    if equipment_data:
+        flowrates = [float(d['Flowrate']) for d in equipment_data if d.get('Flowrate') is not None]
+        pressures = [float(d['Pressure']) for d in equipment_data if d.get('Pressure') is not None]
+        temperatures = [float(d['Temperature']) for d in equipment_data if d.get('Temperature') is not None]
+        
+        if flowrates:
+            min_flow, max_flow = min(flowrates), max(flowrates)
+        if pressures:
+            min_press, max_press = min(pressures), max(pressures)
+        if temperatures:
+            min_temp, max_temp = min(temperatures), max(temperatures)
+
     summary_data = [
-        ['Metric', 'Value'],
-        ['Total Equipment Count', str(summary['total_count'])],
-        ['Average Flowrate', f"{summary['avg_flowrate']:.2f}"],
-        ['Average Pressure', f"{summary['avg_pressure']:.2f}"],
-        ['Average Temperature', f"{summary['avg_temperature']:.2f}"],
+        ['Metric', 'Value', 'Min', 'Max'],
+        ['Total Equipment Count', str(summary['total_count']), '-', '-'],
+        ['Flowrate', f"{summary['avg_flowrate']:.2f}", f"{min_flow:.2f}", f"{max_flow:.2f}"],
+        ['Pressure', f"{summary['avg_pressure']:.2f}", f"{min_press:.2f}", f"{max_press:.2f}"],
+        ['Temperature', f"{summary['avg_temperature']:.2f}", f"{min_temp:.2f}", f"{max_temp:.2f}"],
     ]
     
-    summary_table = Table(summary_data, colWidths=[4*inch, 2*inch])
+    summary_table = Table(summary_data, colWidths=[2.5*inch, 1.5*inch, 1*inch, 1*inch])
     summary_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563eb')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -222,6 +238,42 @@ def generate_pdf_report(request):
     ]))
     elements.append(type_table)
     elements.append(Spacer(1, 0.4*inch))
+
+    # Top 10 Equipment Table
+    if equipment_data:
+        top_heading = Paragraph("Top 10 Equipment Data", heading_style)
+        elements.append(top_heading)
+        elements.append(Spacer(1, 0.15*inch))
+
+        top_data = [['Name', 'Type', 'Flow', 'Press', 'Temp']]
+        for item in equipment_data[:10]:
+            top_data.append([
+                str(item.get('Equipment Name', '')),
+                str(item.get('Type', '')),
+                f"{float(item.get('Flowrate', 0)):.2f}",
+                f"{float(item.get('Pressure', 0)):.2f}",
+                f"{float(item.get('Temperature', 0)):.2f}"
+            ])
+        
+        top_table = Table(top_data, colWidths=[2*inch, 1.5*inch, 0.8*inch, 0.8*inch, 0.9*inch])
+        top_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f8fafc')),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#1e293b')),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(top_table)
+        elements.append(Spacer(1, 0.4*inch))
+
     
     charts_heading = Paragraph("Visualizations", heading_style)
     elements.append(charts_heading)

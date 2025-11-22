@@ -53,9 +53,6 @@ const History = ({ onLogout }) => {
           <button onClick={handleDownloadPDF} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
             Download PDF
           </button>
-          <button onClick={toggleTheme} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
-            {isDark ? '☀️' : '🌙'}
-          </button>
           <button onClick={onLogout} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
             Logout
           </button>

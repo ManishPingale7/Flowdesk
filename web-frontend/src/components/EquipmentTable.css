@@ -1,0 +1,92 @@
+.glass-table-container {
+  background: var(--bg-app);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 32px;
+  overflow: hidden;
+  color: var(--text-heading);
+  font-family: var(--font-body);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+/* Optional: Add a subtle gradient glow behind the table like in the image */
+.glass-table-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 50%;
+  background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.15), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-table-header {
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.glass-table-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.glass-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.glass-table th {
+  text-align: left;
+  padding: 16px 24px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--border-glass);
+  font-family: var(--font-body);
+}
+
+.glass-table td {
+  padding: 20px 24px;
+  color: var(--text-body);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.95rem;
+  transition: color 0.2s;
+  font-family: var(--font-body);
+}
+
+
+.glass-table tr:last-child td {
+  border-bottom: none;
+}
+
+.glass-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.glass-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.glass-table tbody tr:hover td {
+  color: #ffffff;
+}
+
+/* Highlight the first column slightly to mimic the 'header' column in the comparison table */
+.glass-table td:first-child {
+  color: #ffffff;
+  font-weight: 500;
+}

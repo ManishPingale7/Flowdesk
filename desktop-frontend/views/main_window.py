@@ -1,13 +1,15 @@
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QFileDialog, QTableWidget, QTableWidgetItem,
                              QLabel, QTabWidget, QListWidget, QListWidgetItem, QMessageBox,
-                             QGridLayout, QFrame, QDialog, QApplication, QInputDialog, QLineEdit, QHeaderView)
+                             QGridLayout, QFrame, QDialog, QApplication, QInputDialog, QLineEdit, QHeaderView,
+                             QScrollArea, QProgressBar)
 from PyQt5.QtCore import Qt, QSettings, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont, QColor, QMovie
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from api_client import APIClient
 import matplotlib.pyplot as plt
+import random # For demo trend data
 
 
 class LoadingDialog(QDialog):
@@ -29,7 +31,7 @@ class LoadingDialog(QDialog):
             QLabel {
                 font-size: 15px;
                 font-weight: 500;
-                color: #1e293b;
+                color: #f1f5f9;
             }
         """)
         layout.addWidget(self.label)
@@ -41,7 +43,7 @@ class LoadingDialog(QDialog):
             QLabel {
                 font-size: 20px;
                 font-weight: bold;
-                color: #2563eb;
+                color: #f97316;
             }
         """)
         layout.addWidget(self.dots_label)
@@ -57,9 +59,9 @@ class LoadingDialog(QDialog):
         # Style
         self.setStyleSheet("""
             QDialog {
-                background: white;
-                border-radius: 12px;
-                border: 2px solid #e2e8f0;
+                background: #09090b;
+                border-radius: 20px;
+                border: 1px solid #27272a;
             }
         """)
     
@@ -97,138 +99,172 @@ class MainWindow(QMainWindow):
         self.client.set_auth(username, password)
         self.current_summary = None
         self.setWindowTitle('Chemical Equipment Parameter Visualizer')
-        self.settings = QSettings('ChemViz', 'Theme')
-        self.is_dark = self.settings.value('dark_mode', False, type=bool)
+        self.is_dark = True  # Enforce dark mode
         self.setup_styles()
         self.init_ui()
         self.load_summary()
     
     def setup_styles(self):
-        if self.is_dark:
-            stylesheet = self.get_dark_styles()
-        else:
-            stylesheet = self.get_light_styles()
+        stylesheet = self.get_dark_styles()
         self.setStyleSheet(stylesheet)
     
-    def get_light_styles(self):
+    def get_dark_styles(self):
         return """
             QMainWindow {
-                background-color: #f8fafc;
+                background-color: #020204;
             }
             QWidget {
-                font-family: 'Segoe UI', Arial, sans-serif;
+                font-family: 'Segoe UI', sans-serif;
                 font-size: 14px;
+                color: #a1a1aa;
             }
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #2563eb, stop:1 #3b82f6);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 24px;
-                font-weight: 500;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #1e40af, stop:1 #2563eb);
-            }
-            QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #1e3a8a, stop:1 #1e40af);
-            }
-            QPushButton#secondary {
-                background: white;
-                color: #1e293b;
-                border: 1px solid #e2e8f0;
-            }
-            QPushButton#secondary:hover {
-                background: #f8fafc;
-                border-color: #2563eb;
-                color: #2563eb;
-            }
-            QTabWidget::pane {
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
-                background: white;
-                padding: 16px;
-            }
-            QTabBar::tab {
-                background: #f8fafc;
-                color: #64748b;
-                padding: 12px 24px;
-                margin-right: 4px;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-                font-weight: 500;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                color: #2563eb;
-                border-bottom: 2px solid #2563eb;
-            }
-            QTabBar::tab:hover {
-                background: #f1f5f9;
-            }
-            QTableWidget {
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                background: white;
-                gridline-color: #e2e8f0;
-            }
-            QTableWidget::item {
-                padding: 8px;
-            }
-            QHeaderView::section {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #f8fafc, stop:1 #f1f5f9);
-                color: #1e293b;
-                padding: 12px;
-                border: none;
-                border-bottom: 1px solid #e2e8f0;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #18181b, stop:1 #09090b);
+                color: #fafafa;
+                border: 1px solid #27272a;
+                border-radius: 20px;
+                padding: 10px 24px;
                 font-weight: 600;
                 font-size: 13px;
+            }
+            QPushButton:hover {
+                border-color: #f97316;
+                background: #27272a;
+            }
+            QPushButton:pressed {
+                background: #3f3f46;
+            }
+            QPushButton#secondary {
+                background: transparent;
+                color: #a1a1aa;
+                border: 1px solid #27272a;
+            }
+            QPushButton#secondary:hover {
+                color: #f97316;
+                border-color: #f97316;
+                background: rgba(249, 115, 22, 0.1);
+            }
+            QTabWidget::pane {
+                border: none;
+                background: #020204;
+            }
+            QTabBar::tab {
+                background: transparent;
+                color: #71717a;
+                padding: 12px 24px;
+                margin-right: 16px;
+                font-weight: 600;
+                border-bottom: 2px solid transparent;
+                font-size: 15px;
+                min-width: 100px;
+            }
+            QTabBar::tab:selected {
+                color: #f97316;
+                border-bottom: 2px solid #f97316;
+            }
+            QTabBar::tab:hover {
+                color: #a1a1aa;
+            }
+            QTableWidget {
+                border: none;
+                border-radius: 8px;
+                background-color: #09090b;
+                gridline-color: transparent;
+                color: #e4e4e7;
+                selection-background-color: #27272a;
+                selection-color: #f97316;
+                outline: none;
+            }
+            QTableWidget::item {
+                padding: 14px;
+                border-bottom: 1px solid #27272a;
+                color: #e4e4e7;
+            }
+            QTableWidget::item:selected {
+                background-color: #27272a;
+                color: #f97316;
+            }
+            QHeaderView::section {
+                background-color: #09090b;
+                color: #a1a1aa;
+                padding: 14px;
+                border: none;
+                border-bottom: 1px solid #27272a;
+                font-weight: 700;
+                font-size: 11px;
                 text-transform: uppercase;
+                letter-spacing: 1px;
             }
             QListWidget {
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                background: white;
+                border: 1px solid #27272a;
+                border-radius: 20px;
+                background: #09090b;
+                color: #e4e4e7;
             }
             QListWidget::item {
                 padding: 16px;
-                border-bottom: 1px solid #e2e8f0;
-                border-radius: 8px;
-                margin: 4px;
+                border-bottom: 1px solid #27272a;
+                color: #e4e4e7;
             }
             QListWidget::item:hover {
-                background: #f8fafc;
-            }
-            QListWidget::item:selected {
-                background: #eff6ff;
-                color: #2563eb;
+                background: #18181b;
+                color: #f97316;
             }
             QLabel#title {
                 font-size: 20px;
-                font-weight: 600;
-                color: #0f172a;
+                font-weight: 700;
+                color: #fafafa;
                 background: none;
+                letter-spacing: -0.5px;
             }
             QFrame#card {
-                background: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
-                padding: 24px;
+                background-color: #09090b;
+                border: 1px solid #27272a;
+                border-radius: 20px;
             }
-            QLabel#summary-label {
-                font-size: 16px;
-                color: #64748b;
-                padding: 20px;
+            QFrame#card:hover {
+                border: 1px solid #3f3f46;
+            }
+            QWidget#central_widget {
+                background-color: #020204;
+            }
+            QWidget#scroll_content {
+                background-color: #020204;
+            }
+            QScrollArea {
+                border: none;
+                background-color: #020204;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background: #020204;
+                width: 8px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #27272a;
+                min-height: 20px;
+                border-radius: 4px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            QProgressBar {
+                border: none;
+                background-color: #27272a;
+                border-radius: 4px;
+                text-align: center;
+                color: transparent;
+            }
+            QProgressBar::chunk {
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #fb923c, stop:1 #ea580c);
+                border-radius: 4px;
             }
         """
     
     def init_ui(self):
         central_widget = QWidget()
+        central_widget.setObjectName("central_widget")
         self.setCentralWidget(central_widget)
         
         layout = QVBoxLayout()
@@ -236,247 +272,242 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         central_widget.setLayout(layout)
         
+        # Header
         header = QFrame()
-        header.setFrameShape(QFrame.NoFrame)
+        header.setStyleSheet("background: rgba(9, 9, 11, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.1);")
         header_layout = QHBoxLayout()
-        header_layout.setContentsMargins(20, 15, 20, 15)
-        header_layout.setSpacing(10)
+        header_layout.setContentsMargins(32, 20, 32, 20)
+        header_layout.setSpacing(16)
         header.setLayout(header_layout)
         
         self.title_label = QLabel('Chemical Equipment Visualizer')
         self.title_label.setObjectName('title')
-        title_font = QFont()
-        title_font.setPointSize(20)
-        title_font.setWeight(QFont.Bold)
-        self.title_label.setFont(title_font)
-        # Explicitly set text color based on theme to prevent gradient issues
-        if self.is_dark:
-            self.title_label.setStyleSheet('color: #f1f5f9;')
-        else:
-            self.title_label.setStyleSheet('color: #1e293b;')
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
         
-        upload_btn = QPushButton('📤 Upload CSV')
+        upload_btn = QPushButton('Upload CSV')
         upload_btn.clicked.connect(self.upload_csv)
         header_layout.addWidget(upload_btn)
         
-        pdf_btn = QPushButton('📄 Download PDF')
+        pdf_btn = QPushButton('Download PDF')
         pdf_btn.setObjectName('secondary')
         pdf_btn.clicked.connect(self.download_pdf)
         header_layout.addWidget(pdf_btn)
         
-        refresh_btn = QPushButton('🔄 Refresh')
+        refresh_btn = QPushButton('Refresh')
         refresh_btn.setObjectName('secondary')
         refresh_btn.clicked.connect(self.refresh_data)
         header_layout.addWidget(refresh_btn)
         
-        self.theme_btn = QPushButton('🌙' if not self.is_dark else '☀️')
-        self.theme_btn.setObjectName('secondary')
-        self.theme_btn.clicked.connect(self.toggle_theme)
-        header_layout.addWidget(self.theme_btn)
-        
         layout.addWidget(header)
+        layout.addSpacing(24)
         
+        # Tabs
         tabs = QTabWidget()
         
-        summary_tab = self.create_summary_tab()
-        tabs.addTab(summary_tab, '📊 Summary')
-        
-        table_tab = self.create_table_tab()
-        tabs.addTab(table_tab, '📋 Equipment Table')
-        
-        charts_tab = self.create_charts_tab()
-        tabs.addTab(charts_tab, '📈 Charts')
+        dashboard_tab = self.create_dashboard_tab()
+        tabs.addTab(dashboard_tab, 'Dashboard')
         
         history_tab = self.create_history_tab()
-        tabs.addTab(history_tab, '📜 History')
+        tabs.addTab(history_tab, 'History')
         
         layout.addWidget(tabs)
     
-    def create_summary_tab(self):
-        widget = QWidget()
-        layout = QVBoxLayout()
-        layout.setContentsMargins(24, 24, 24, 24)
-        widget.setLayout(layout)
+    def create_dashboard_tab(self):
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
         
-        cards_layout = QGridLayout()
-        cards_layout.setSpacing(20)
+        content_widget = QWidget()
+        content_widget.setObjectName("scroll_content")
+        layout = QVBoxLayout()
+        layout.setContentsMargins(32, 32, 32, 32)
+        layout.setSpacing(32)
+        content_widget.setLayout(layout)
+        
+        # Summary Cards
+        self.summary_section = self.create_summary_section()
+        layout.addWidget(self.summary_section)
+        
+        # Charts Section
+        self.charts_section = self.create_charts_section()
+        layout.addWidget(self.charts_section)
+        
+        # Table Section
+        self.table_section = self.create_table_section()
+        layout.addWidget(self.table_section)
+        
+        layout.addStretch()
+        scroll_area.setWidget(content_widget)
+        return scroll_area
+
+    def create_summary_section(self):
+        widget = QWidget()
+        layout = QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(20)
+        widget.setLayout(layout)
         
         self.summary_cards = []
         card_data = [
-            ('Total Equipment', 'total_count', '#2563eb', '📊'),
-            ('Avg Flowrate', 'avg_flowrate', '#10b981', '💧'),
-            ('Avg Pressure', 'avg_pressure', '#f59e0b', '⚡'),
+            ('Total Equipment', 'total_count', '#f97316', '📊'),
+            ('Avg Flowrate', 'avg_flowrate', '#8b5cf6', '💧'),
+            ('Avg Pressure', 'avg_pressure', '#f97316', '⚡'),
             ('Avg Temperature', 'avg_temperature', '#ef4444', '🌡️')
         ]
         
         for i, (label, key, color, icon) in enumerate(card_data):
             card = self.create_summary_card(label, key, color, icon)
-            cards_layout.addWidget(card, i // 2, i % 2)
+            layout.addWidget(card, 0, i)
             self.summary_cards.append(card)
-        
-        layout.addLayout(cards_layout)
-        layout.addStretch()
-        
+            
         return widget
     
     def create_summary_card(self, label, key, color, icon):
         card = QFrame()
         card.setObjectName('card')
-        card.setStyleSheet(f"""
-            QFrame#card {{
-                background: white;
-                border: 1px solid #e2e8f0;
-                border-left: 4px solid {color};
-                border-radius: 12px;
-                padding: 24px;
-            }}
-        """)
+        # Gradient background handled in stylesheet
         
         layout = QVBoxLayout()
-        layout.setSpacing(12)
+        layout.setSpacing(8)
+        layout.setContentsMargins(20, 20, 20, 20)
         card.setLayout(layout)
         
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(10)
+        
         icon_label = QLabel(icon)
-        icon_label.setStyleSheet("font-size: 32px;")
-        layout.addWidget(icon_label)
+        icon_label.setStyleSheet(f"font-size: 18px; color: {color};")
+        header_layout.addWidget(icon_label)
         
         label_widget = QLabel(label)
         label_widget.setStyleSheet("""
-            color: #64748b;
+            color: #a1a1aa;
             font-size: 13px;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         """)
-        layout.addWidget(label_widget)
+        header_layout.addWidget(label_widget)
+        header_layout.addStretch()
+        
+        layout.addLayout(header_layout)
         
         value_label = QLabel('0')
-        value_label.setStyleSheet(f"""
-            color: {color};
-            font-size: 32px;
-            font-weight: 700;
+        value_label.setStyleSheet("""
+            color: #fafafa;
+            font-size: 24px;
+            font-weight: 600;
+            font-family: 'Segoe UI', sans-serif;
+            letter-spacing: -0.5px;
         """)
         value_label.setObjectName(f'value_{key}')
         layout.addWidget(value_label)
         
         return card
-    
-    def create_table_tab(self):
-        widget = QWidget()
-        widget.setAutoFillBackground(True)
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        widget.setLayout(layout)
+
+    def create_charts_section(self):
+        container = QFrame()
+        container.setObjectName('card')
+        layout = QHBoxLayout() # Horizontal layout for Pie + Progress Bars
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(32)
+        container.setLayout(layout)
         
-        self.table = QTableWidget()
-        self.table.setAlternatingRowColors(True)
-        self.table.setShowGrid(True)
-        self.table.setFrameShape(QFrame.NoFrame)
-        self.table.verticalHeader().setVisible(False)  # Hide row numbers
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.update_table_style()
-        layout.addWidget(self.table)
+        # Left: Pie Chart
+        left_widget = QWidget()
+        left_layout = QVBoxLayout()
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_widget.setLayout(left_layout)
         
-        return widget
-    
-    def update_table_style(self):
-        if self.is_dark:
-            self.table.setStyleSheet("""
-                QTableWidget {
-                    background-color: #1e293b;
-                    color: #f1f5f9;
-                    gridline-color: #334155;
-                    border: none;
-                }
-                QTableWidget::item {
-                    border: none;
-                    color: #f1f5f9;
-                    padding: 8px;
-                    background-color: transparent;
-                }
-                QTableWidget::item:alternate {
-                    background-color: #0f172a;
-                }
-                QTableWidget::item:selected {
-                    background-color: #334155;
-                    color: #60a5fa;
-                }
-                QHeaderView::section {
-                    background-color: #0f172a;
-                    color: #f1f5f9;
-                    padding: 12px;
-                    border: none;
-                    border-bottom: 1px solid #334155;
-                    border-right: 1px solid #334155;
-                    font-weight: 600;
-                }
-                QHeaderView::section:last {
-                    border-right: none;
-                }
-                QTableCornerButton::section {
-                    background-color: #0f172a;
-                    border: none;
-                }
-            """)
-        else:
-            self.table.setStyleSheet("""
-                QTableWidget {
-                    background-color: white;
-                    color: #1e293b;
-                    gridline-color: #e2e8f0;
-                    border: none;
-                }
-                QTableWidget::item {
-                    border: none;
-                    color: #1e293b;
-                    padding: 8px;
-                    background-color: transparent;
-                }
-                QTableWidget::item:alternate {
-                    background-color: #f8fafc;
-                }
-                QTableWidget::item:selected {
-                    background-color: #eff6ff;
-                    color: #2563eb;
-                }
-                QHeaderView::section {
-                    background-color: #f8fafc;
-                    color: #1e293b;
-                    padding: 12px;
-                    border: none;
-                    border-bottom: 1px solid #e2e8f0;
-                    border-right: 1px solid #e2e8f0;
-                    font-weight: 600;
-                }
-                QHeaderView::section:last {
-                    border-right: none;
-                }
-                QTableCornerButton::section {
-                    background-color: #f8fafc;
-                    border: none;
-                }
-            """)
-    
-    def create_charts_tab(self):
-        widget = QWidget()
+        pie_title = QLabel("Equipment Distribution")
+        pie_title.setStyleSheet("font-size: 15px; font-weight: 600; color: #fafafa; margin-bottom: 10px;")
+        left_layout.addWidget(pie_title)
+
+        self.chart_canvas = FigureCanvas(Figure(figsize=(8, 6)))
+        self.chart_canvas.figure.patch.set_facecolor('#09090b') # Match bg
+        self.chart_canvas.setMinimumHeight(400)
+        left_layout.addWidget(self.chart_canvas)
+        
+        layout.addWidget(left_widget, 1) # Stretch factor 1
+        
+        # Right: Progress Bars (Analytics Overview)
+        right_widget = QWidget()
+        right_layout = QVBoxLayout()
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(24)
+        right_widget.setLayout(right_layout)
+        
+        stats_title = QLabel("Average Statistics")
+        stats_title.setStyleSheet("font-size: 15px; font-weight: 600; color: #fafafa; margin-bottom: 10px;")
+        right_layout.addWidget(stats_title)
+        
+        self.progress_bars = {}
+        stats_config = [
+            ('Flowrate', 'avg_flowrate', 200), # Max value approx
+            ('Pressure', 'avg_pressure', 20),
+            ('Temperature', 'avg_temperature', 300)
+        ]
+        
+        for label, key, max_val in stats_config:
+            stat_container = QWidget()
+            stat_layout = QVBoxLayout()
+            stat_layout.setSpacing(8)
+            stat_layout.setContentsMargins(0, 0, 0, 0)
+            stat_container.setLayout(stat_layout)
+            
+            # Label Row
+            label_row = QHBoxLayout()
+            name_label = QLabel(label)
+            name_label.setStyleSheet("color: #a1a1aa; font-size: 13px; font-weight: 500;")
+            label_row.addWidget(name_label)
+            
+            val_label = QLabel("0.00")
+            val_label.setObjectName(f"val_{key}")
+            val_label.setStyleSheet("color: #fafafa; font-size: 13px; font-weight: 600; font-family: 'Consolas', monospace;")
+            label_row.addWidget(val_label)
+            stat_layout.addLayout(label_row)
+            
+            # Progress Bar
+            pbar = QProgressBar()
+            pbar.setRange(0, max_val)
+            pbar.setValue(0)
+            pbar.setFixedHeight(6) # Thin and sleek
+            # Use global stylesheet for gradient
+            self.progress_bars[key] = pbar
+            stat_layout.addWidget(pbar)
+            
+            right_layout.addWidget(stat_container)
+            
+        right_layout.addStretch()
+        layout.addWidget(right_widget, 1) # Stretch factor 1
+        
+        return container
+
+    def create_table_section(self):
+        container = QFrame()
+        container.setObjectName('card')
         layout = QVBoxLayout()
         layout.setContentsMargins(24, 24, 24, 24)
-        widget.setLayout(layout)
+        layout.setSpacing(20)
+        container.setLayout(layout)
         
-        self.chart_canvas = FigureCanvas(Figure(figsize=(12, 6)))
-        self.chart_canvas.figure.patch.set_facecolor('#ffffff')
-        layout.addWidget(self.chart_canvas)
+        title = QLabel("Equipment Data")
+        title.setStyleSheet("font-size: 18px; font-weight: 600; color: #fafafa;")
+        layout.addWidget(title)
         
-        return widget
+        self.table = QTableWidget()
+        self.table.setAlternatingRowColors(False)
+        self.table.setShowGrid(False)
+        self.table.setFrameShape(QFrame.NoFrame)
+        self.table.verticalHeader().setVisible(False)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setMinimumHeight(400)
+        layout.addWidget(self.table)
+        
+        return container
     
     def create_history_tab(self):
         widget = QWidget()
         layout = QVBoxLayout()
-        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setContentsMargins(32, 32, 32, 32)
         widget.setLayout(layout)
         
         self.history_list = QListWidget()
@@ -512,7 +543,6 @@ class MainWindow(QMainWindow):
             self.worker.start()
     
     def refresh_data(self):
-        """Refresh data with loading dialog"""
         progress = LoadingDialog('Refreshing data...', self)
         progress.show()
         QApplication.processEvents()
@@ -524,7 +554,6 @@ class MainWindow(QMainWindow):
             if result:
                 self.current_summary = result['summary']
                 self.update_ui()
-                # Also refresh history
                 self.load_history(show_loading=False)
                 self.show_message(QMessageBox.Information, 'Success', 'Data refreshed successfully!')
         
@@ -557,8 +586,6 @@ class MainWindow(QMainWindow):
         def on_summary_error(error):
             if progress:
                 progress.close()
-            if hasattr(self, 'summary_label'):
-                self.summary_label.setText(f'No data available: {error}')
         
         self.worker.finished.connect(on_summary_finished)
         self.worker.error.connect(on_summary_error)
@@ -568,16 +595,16 @@ class MainWindow(QMainWindow):
         if not self.current_summary:
             return
         
-        if hasattr(self, 'summary_cards'):
-            card_keys = ['total_count', 'avg_flowrate', 'avg_pressure', 'avg_temperature']
-            for i, card in enumerate(self.summary_cards):
-                key = card_keys[i]
-                value_widget = card.findChild(QLabel, f'value_{key}')
-                if value_widget:
-                    if key == 'total_count':
-                        value_widget.setText(str(self.current_summary[key]))
-                    else:
-                        value_widget.setText(f"{self.current_summary[key]:.2f}")
+        # Update Summary Cards
+        card_keys = ['total_count', 'avg_flowrate', 'avg_pressure', 'avg_temperature']
+        for i, card in enumerate(self.summary_cards):
+            key = card_keys[i]
+            value_widget = card.findChild(QLabel, f'value_{key}')
+            if value_widget:
+                if key == 'total_count':
+                    value_widget.setText(str(self.current_summary[key]))
+                else:
+                    value_widget.setText(f"{self.current_summary[key]:.2f}")
         
         self.update_table()
         self.update_charts()
@@ -595,81 +622,85 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels(headers)
         self.table.setRowCount(len(data))
         
-        for row, item in enumerate(data):
-            for col, header in enumerate(headers):
-                value = str(item.get(header, ''))
-                item_widget = QTableWidgetItem(value)
-                item_widget.setTextAlignment(Qt.AlignCenter)
-                self.table.setItem(row, col, item_widget)
+        # Monospace font for numbers
+        mono_font = QFont("Consolas", 10)
         
-        self.table.resizeColumnsToContents()
+        for row, item in enumerate(data):
+            # Equipment Name
+            name_item = QTableWidgetItem(str(item.get('Equipment Name', '')))
+            name_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.table.setItem(row, 0, name_item)
+            
+            # Type
+            type_item = QTableWidgetItem(str(item.get('Type', '')))
+            type_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            self.table.setItem(row, 1, type_item)
+            
+            # Numerical columns
+            for col, key in enumerate(['Flowrate', 'Pressure', 'Temperature'], start=2):
+                val = item.get(key, 0)
+                # Format to 2 decimal places
+                val_str = f"{float(val):.2f}" if val else "0.00"
+                
+                num_item = QTableWidgetItem(val_str)
+                num_item.setFont(mono_font)
+                num_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.table.setItem(row, col, num_item)
+        
+        # self.table.resizeColumnsToContents()
     
     def update_charts(self):
         if not self.current_summary:
             return
         
+        # 1. Update Pie Chart
         self.chart_canvas.figure.clear()
         
-        try:
-            if self.is_dark:
-                plt.style.use('dark_background')
-            else:
-                try:
-                    plt.style.use('seaborn-v0_8-whitegrid')
-                except:
-                    plt.style.use('default')
-        except:
-            pass
+        # Dark theme chart styling
+        plt.style.use('dark_background')
         
         fig = self.chart_canvas.figure
-        if self.is_dark:
-            fig.patch.set_facecolor('#1e293b')
-        else:
-            fig.patch.set_facecolor('#ffffff')
+        fig.patch.set_facecolor('#09090b')
         
-        ax1 = fig.add_subplot(121)
-        ax2 = fig.add_subplot(122)
-        
-        if self.is_dark:
-            ax1.set_facecolor('#1e293b')
-            ax2.set_facecolor('#1e293b')
-            text_color = '#f1f5f9'
-        else:
-            text_color = '#1e293b'
+        ax = fig.add_subplot(111)
+        ax.set_facecolor('#09090b')
         
         type_dist = self.current_summary['type_distribution']
         types = list(type_dist.keys())
         counts = list(type_dist.values())
         
-        colors = ['#2563eb', '#7c3aed', '#10b981', '#f59e0b', '#ef4444']
-        if self.is_dark:
-            colors = ['#3b82f6', '#8b5cf6', '#10b981', '#fbbf24', '#f87171']
+        # Orange and Purple palette
+        colors = ['#f97316', '#8b5cf6', '#fb923c', '#a78bfa', '#fdba74']
         
-        ax1.pie(counts, labels=types, autopct='%1.1f%%', colors=colors[:len(types)], startangle=90,
-                textprops={'color': text_color, 'fontweight': 'bold'})
-        ax1.set_title('Equipment Type Distribution', fontsize=14, fontweight='bold', pad=20, color=text_color)
+        wedges, texts, autotexts = ax.pie(counts, labels=types, autopct='%1.1f%%', colors=colors[:len(types)], 
+                startangle=90, textprops={'color': '#a1a1aa'}, radius=1.1)
         
-        stats = ['Flowrate', 'Pressure', 'Temperature']
-        values = [
-            self.current_summary['avg_flowrate'],
-            self.current_summary['avg_pressure'],
-            self.current_summary['avg_temperature']
-        ]
-        
-        bar_colors = ['#2563eb', '#10b981', '#f59e0b'] if not self.is_dark else ['#3b82f6', '#10b981', '#fbbf24']
-        bars = ax2.bar(stats, values, color=bar_colors)
-        ax2.set_title('Average Statistics', fontsize=14, fontweight='bold', pad=20, color=text_color)
-        ax2.set_ylabel('Value', fontweight='bold', color=text_color)
-        ax2.tick_params(colors=text_color)
-        ax2.grid(True, alpha=0.3, axis='y')
-        
-        for bar in bars:
-            height = bar.get_height()
-            ax2.text(bar.get_x() + bar.get_width()/2., height,
-                    f'{height:.2f}', ha='center', va='bottom', fontweight='bold', color=text_color)
+        plt.setp(autotexts, size=10, weight="bold", color="#fafafa")
+        plt.setp(texts, size=10)
         
         fig.tight_layout()
         self.chart_canvas.draw()
+        
+        # 2. Update Progress Bars
+        stats_map = {
+            'avg_flowrate': 200,
+            'avg_pressure': 20,
+            'avg_temperature': 300
+        }
+        
+        for key, max_val in stats_map.items():
+            if key in self.current_summary:
+                val = self.current_summary[key]
+                
+                # Update Label
+                val_label = self.findChild(QLabel, f"val_{key}")
+                if val_label:
+                    val_label.setText(f"{val:.2f}")
+                
+                # Update Progress Bar
+                if hasattr(self, 'progress_bars') and key in self.progress_bars:
+                    pbar = self.progress_bars[key]
+                    pbar.setValue(int(min(val, max_val)))
     
     def load_history(self, show_loading=True):
         if show_loading:
@@ -688,14 +719,14 @@ class MainWindow(QMainWindow):
             
             for item in history:
                 date_str = item['uploaded_at'][:19].replace('T', ' ')
-                text = f"📦 Dataset #{item['id']} - {date_str}\n"
+                text = f"Dataset #{item['id']} - {date_str}\n"
                 text += f"Total: {item['summary']['total_count']} | "
                 text += f"Flowrate: {item['summary']['avg_flowrate']:.2f} | "
                 text += f"Pressure: {item['summary']['avg_pressure']:.2f} | "
                 text += f"Temp: {item['summary']['avg_temperature']:.2f}"
                 
                 list_item = QListWidgetItem(text)
-                list_item.setFont(QFont('Segoe UI', 11))
+                list_item.setFont(QFont('Segoe UI', 10))
                 self.history_list.addItem(list_item)
         
         def on_history_error(error):
@@ -711,7 +742,6 @@ class MainWindow(QMainWindow):
             self.show_message(QMessageBox.Warning, 'No Data', 'Please upload a CSV file first')
             return
         
-        # Select save location
         save_path, _ = QFileDialog.getSaveFileName(
             self, 'Save PDF Report', 'equipment_report.pdf', 'PDF Files (*.pdf)'
         )
@@ -740,158 +770,15 @@ class MainWindow(QMainWindow):
             self.pdf_worker.start()
     
     def show_message(self, icon, title, text):
-        """Helper method to show message box with proper theming"""
         msg = QMessageBox(self)
         msg.setIcon(icon)
         msg.setWindowTitle(title)
         msg.setText(text)
-        if self.is_dark:
-            msg.setStyleSheet(
-                "QMessageBox { background-color: #0f172a; color: #f1f5f9; } "
-                "QLabel { color: #f1f5f9; } "
-                "QPushButton { color: #f1f5f9; background-color: #1e293b; border-radius: 6px; padding: 6px 16px; }"
-            )
-        else:
-            msg.setStyleSheet(
-                "QMessageBox { background-color: #ffffff; color: #1e293b; } "
-                "QLabel { color: #1e293b; } "
-                "QPushButton { color: #1e293b; }"
-            )
+        msg.setStyleSheet(
+            "QMessageBox { background-color: #18181b; color: #fafafa; } "
+            "QLabel { color: #fafafa; } "
+            "QPushButton { color: #fafafa; background-color: #27272a; border: 1px solid #3f3f46; border-radius: 6px; padding: 6px 16px; }"
+            "QPushButton:hover { background-color: #3f3f46; }"
+        )
         return msg.exec_()
-    
-    def toggle_theme(self):
-        self.is_dark = not self.is_dark
-        self.settings.setValue('dark_mode', self.is_dark)
-        self.theme_btn.setText('☀️' if self.is_dark else '🌙')
-        
-        # Update title color
-        if self.is_dark:
-            self.title_label.setStyleSheet('color: #f1f5f9;')
-        else:
-            self.title_label.setStyleSheet('color: #1e293b;')
-        
-        self.setup_styles()
-        self.update_table_style()
-        self.update_charts()
-    
-    def get_dark_styles(self):
-        return """
-            QMainWindow {
-                background-color: #0f172a;
-            }
-            QWidget {
-                font-family: 'Segoe UI', Arial, sans-serif;
-                font-size: 14px;
-                color: #f1f5f9;
-            }
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #3b82f6, stop:1 #2563eb);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 24px;
-                font-weight: 500;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #60a5fa, stop:1 #3b82f6);
-            }
-            QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #2563eb, stop:1 #1e40af);
-            }
-            QPushButton#secondary {
-                background: #1e293b;
-                color: #f1f5f9;
-                border: 1px solid #334155;
-            }
-            QPushButton#secondary:hover {
-                background: #334155;
-                border-color: #3b82f6;
-                color: #60a5fa;
-            }
-            QTabWidget::pane {
-                border: 1px solid #334155;
-                border-radius: 12px;
-                background: #1e293b;
-                padding: 16px;
-            }
-            QTabBar::tab {
-                background: #0f172a;
-                color: #94a3b8;
-                padding: 12px 24px;
-                margin-right: 4px;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-                font-weight: 500;
-            }
-            QTabBar::tab:selected {
-                background: #1e293b;
-                color: #60a5fa;
-                border-bottom: 2px solid #3b82f6;
-            }
-            QTabBar::tab:hover {
-                background: #1e293b;
-            }
-            QTableWidget {
-                border: 1px solid #334155;
-                border-radius: 8px;
-                background: #1e293b;
-                gridline-color: #334155;
-                color: #f1f5f9;
-            }
-            QTableWidget::item {
-                padding: 8px;
-                color: #f1f5f9;
-            }
-            QHeaderView::section {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                    stop:0 #1e293b, stop:1 #0f172a);
-                color: #f1f5f9;
-                padding: 12px;
-                border: none;
-                border-bottom: 1px solid #334155;
-                font-weight: 600;
-                font-size: 13px;
-                text-transform: uppercase;
-            }
-            QListWidget {
-                border: 1px solid #334155;
-                border-radius: 8px;
-                background: #1e293b;
-                color: #f1f5f9;
-            }
-            QListWidget::item {
-                padding: 16px;
-                border-bottom: 1px solid #334155;
-                border-radius: 8px;
-                margin: 4px;
-                color: #f1f5f9;
-            }
-            QListWidget::item:hover {
-                background: #334155;
-            }
-            QListWidget::item:selected {
-                background: #1e3a8a;
-                color: #60a5fa;
-            }
-            QLabel#title {
-                font-size: 20px;
-                font-weight: 600;
-                color: #f1f5f9;
-                background: none;
-            }
-            QFrame#card {
-                background: #1e293b;
-                border: 1px solid #334155;
-                border-radius: 12px;
-                padding: 24px;
-            }
-            QLabel#summary-label {
-                font-size: 16px;
-                color: #94a3b8;
-                padding: 20px;
-            }
-        """
+
