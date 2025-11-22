@@ -199,11 +199,13 @@ class AuthDialog(QDialog):
     def create_login_widget(self):
         widget = QWidget()
         layout = QVBoxLayout()
-        layout.setSpacing(16)
+        layout.setSpacing(10)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignTop)
         widget.setLayout(layout)
         
         username_container = QVBoxLayout()
-        username_container.setSpacing(6)
+        username_container.setSpacing(0)
         
         username_label = QLabel('Username')
         username_label.setObjectName('field-label')
@@ -218,7 +220,7 @@ class AuthDialog(QDialog):
         layout.addLayout(username_container)
         
         password_container = QVBoxLayout()
-        password_container.setSpacing(6)
+        password_container.setSpacing(0)
         
         password_label = QLabel('Password')
         password_label.setObjectName('field-label')
@@ -233,12 +235,14 @@ class AuthDialog(QDialog):
         
         layout.addLayout(password_container)
         
+        layout.addSpacing(6)
+
         login_btn = QPushButton('Login')
         login_btn.clicked.connect(self.handle_login)
         login_btn.setCursor(Qt.PointingHandCursor)
         layout.addWidget(login_btn)
         
-        layout.addSpacing(16)
+        layout.addSpacing(10)
         
         footer = QHBoxLayout()
         footer.addStretch()
@@ -253,19 +257,20 @@ class AuthDialog(QDialog):
         footer.addStretch()
         
         layout.addLayout(footer)
+        layout.addStretch()
         
         return widget
     
     def create_register_widget(self):
         widget = QWidget()
         layout = QVBoxLayout()
-        layout.setSpacing(16)
+        layout.setSpacing(10)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignTop)
         widget.setLayout(layout)
         
         username_container = QVBoxLayout()
-        username_container.setSpacing(6)
+        username_container.setSpacing(0)
         
         username_label = QLabel('Username')
         username_label.setObjectName('field-label')
@@ -280,7 +285,7 @@ class AuthDialog(QDialog):
         layout.addLayout(username_container)
         
         email_container = QVBoxLayout()
-        email_container.setSpacing(6)
+        email_container.setSpacing(0)
         
         email_label = QLabel('Email')
         email_label.setObjectName('field-label')
@@ -295,7 +300,7 @@ class AuthDialog(QDialog):
         layout.addLayout(email_container)
         
         password_container = QVBoxLayout()
-        password_container.setSpacing(6)
+        password_container.setSpacing(0)
         
         password_label = QLabel('Password')
         password_label.setObjectName('field-label')
@@ -311,7 +316,7 @@ class AuthDialog(QDialog):
         layout.addLayout(password_container)
         
         confirm_container = QVBoxLayout()
-        confirm_container.setSpacing(6)
+        confirm_container.setSpacing(0)
         
         confirm_label = QLabel('Confirm Password')
         confirm_label.setObjectName('field-label')
@@ -326,13 +331,15 @@ class AuthDialog(QDialog):
         
         layout.addLayout(confirm_container)
         
+        layout.addSpacing(6)
+
         register_btn = QPushButton('Sign Up')
         register_btn.clicked.connect(self.handle_register)
         register_btn.setCursor(Qt.PointingHandCursor)
         register_btn.setMinimumHeight(46)
         layout.addWidget(register_btn)
         
-        layout.addSpacing(12)
+        layout.addSpacing(10)
         
         footer = QHBoxLayout()
         footer.addStretch()

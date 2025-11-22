@@ -711,11 +711,6 @@ class MainWindow(QMainWindow):
             self.show_message(QMessageBox.Warning, 'No Data', 'Please upload a CSV file first')
             return
         
-        # Calculate password for user information
-        total_count = self.current_summary.get('total_count', 0)
-        digit_sum = sum(int(digit) for digit in str(total_count))
-        pdf_password = f"equi{digit_sum}"
-        
         # Select save location
         save_path, _ = QFileDialog.getSaveFileName(
             self, 'Save PDF Report', 'equipment_report.pdf', 'PDF Files (*.pdf)'
@@ -733,10 +728,7 @@ class MainWindow(QMainWindow):
                 self.show_message(
                     QMessageBox.Information,
                     'Success',
-                    f'PDF report saved to:\n{save_path}\n\n'
-                    f'The PDF is password protected.\n'
-                    f'Password: {pdf_password}\n\n'
-                    f'(Formula: "equi" + sum of digits in equipment count {total_count})'
+                    f'PDF report saved to:\n{save_path}'
                 )
             
             def on_pdf_error(error):

@@ -32,14 +32,8 @@ const History = ({ onLogout }) => {
     }
     
     try {
-      // Get latest summary to calculate password for user information
-      const summaryData = await getSummary()
-      const totalCount = summaryData.summary?.total_count || 0
-      const digitSum = String(totalCount).split('').reduce((sum, digit) => sum + parseInt(digit), 0)
-      const pdfPassword = `equi${digitSum}`
-      
       await downloadPDF()
-      alert(`PDF downloaded successfully!\n\nThe PDF is password protected.\nPassword: ${pdfPassword}\n\n(Formula: "equi" + sum of digits in equipment count ${totalCount})`)
+      alert('PDF downloaded successfully!')
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Failed to download PDF'
       setError(errorMsg)
