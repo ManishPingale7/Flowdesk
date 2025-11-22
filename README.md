@@ -24,6 +24,48 @@ Flowdesk/
 
 ## Backend Setup (Django)
 
+### Windows
+
+1. Navigate to backend directory:
+```cmd
+cd backend
+```
+
+2. Create and activate virtual environment:
+```cmd
+python -m venv venv
+venv\Scripts\activate
+```
+
+3. Install dependencies:
+```cmd
+pip install -r requirements.txt
+```
+
+4. Run migrations:
+```cmd
+python manage.py migrate
+```
+
+5. Create superuser:
+```cmd
+python manage.py createsuperuser
+```
+
+6. Run development server:
+```cmd
+python manage.py runserver
+```
+
+Or use the batch script:
+```cmd
+start_dev.bat
+```
+
+**Note:** Gunicorn doesn't work on Windows. Use Django dev server (development) or Waitress (production-like testing). See [WINDOWS_VS_UNIX.md](WINDOWS_VS_UNIX.md) for details.
+
+### Unix/Linux/Mac
+
 1. Navigate to backend directory:
 ```bash
 cd backend
@@ -32,9 +74,7 @@ cd backend
 2. Create and activate virtual environment:
 ```bash
 python -m venv venv
-source venv/Scripts/activate  # Windows
-# or
-source venv/bin/activate      # Linux/Mac
+source venv/bin/activate
 ```
 
 3. Install dependencies:
@@ -165,6 +205,50 @@ Valve-001,Valve,75.3,30.1,20.5
 - **Backend**: Django, Django REST Framework, pandas, ReportLab
 - **Web Frontend**: React, Chart.js, Axios, Vite
 - **Desktop Frontend**: PyQt5, Matplotlib, requests
+
+## Deployment
+
+### Production Deployment
+
+For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
+
+#### Quick Deploy Checklist
+
+**Backend (Railway/Render):**
+1. Set environment variables:
+   - `SECRET_KEY` - Generate new secure key
+   - `DEBUG=False`
+   - `ALLOWED_HOSTS` - Your backend domain
+   - `FRONTEND_URL` - Your frontend URL(s)
+2. Run migrations after deploy
+3. Create superuser
+
+**Frontend (Vercel):**
+1. Set environment variable:
+   - `VITE_API_URL` - Your backend API URL
+2. Deploy from GitHub
+
+**Important:** After deploying, update backend's `FRONTEND_URL` with your deployed frontend URL to fix CORS issues.
+
+### Troubleshooting Deployment
+
+If registration works locally but not in production:
+1. Check that `FRONTEND_URL` environment variable is set on backend
+2. Verify CORS settings allow your frontend domain
+3. Check browser console for CORS errors
+4. Review [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed fixes
+
+Run deployment checker:
+```bash
+cd backend
+python check_deployment.py
+```
+
+## Documentation
+
+- [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Complete deployment instructions
+- [REGISTRATION_DEBUG.md](REGISTRATION_DEBUG.md) - Registration troubleshooting
+- [REGISTRATION_TEST_RESULTS.md](REGISTRATION_TEST_RESULTS.md) - Test verification
 
 ## License
 

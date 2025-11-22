@@ -152,8 +152,19 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
+# Add production frontend URLs from environment variable
 if os.environ.get('FRONTEND_URL'):
-    CORS_ALLOWED_ORIGINS.append(os.environ.get('FRONTEND_URL'))
+    frontend_urls = os.environ.get('FRONTEND_URL').split(',')
+    for url in frontend_urls:
+        url = url.strip()
+        if url and url not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(url)
+
+# For production: allow all origins if CORS_ALLOW_ALL is set
+if os.environ.get('CORS_ALLOW_ALL', 'False') == 'True':
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
