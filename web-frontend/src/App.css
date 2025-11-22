@@ -118,7 +118,7 @@
 }
 
 .table th {
-  background: linear-gradient(135deg, var(--bg-primary) 0%, #f1f5f9 100%);
+  background: var(--bg-primary);
   font-weight: 600;
   color: var(--text-primary);
   font-size: 14px;
@@ -128,6 +128,7 @@
 
 .table tbody tr {
   transition: background-color 0.15s ease;
+  background: var(--bg-secondary);
 }
 
 .table tbody tr:hover {
@@ -136,6 +137,11 @@
 
 .table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.table td {
+  color: var(--text-primary);
+  background: transparent;
 }
 
 .nav {

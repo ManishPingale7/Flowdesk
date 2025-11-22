@@ -1,13 +1,93 @@
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QFileDialog, QTableWidget, QTableWidgetItem,
                              QLabel, QTabWidget, QListWidget, QListWidgetItem, QMessageBox,
-                             QGridLayout, QFrame)
-from PyQt5.QtCore import Qt, QSettings
-from PyQt5.QtGui import QFont, QColor
+                             QGridLayout, QFrame, QDialog, QApplication, QInputDialog, QLineEdit, QHeaderView)
+from PyQt5.QtCore import Qt, QSettings, QThread, pyqtSignal, QTimer
+from PyQt5.QtGui import QFont, QColor, QMovie
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from api_client import APIClient
 import matplotlib.pyplot as plt
+
+
+class LoadingDialog(QDialog):
+    def __init__(self, message, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Loading')
+        self.setModal(True)
+        self.setFixedSize(300, 120)
+        self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        
+        layout = QVBoxLayout()
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+        
+        # Message label
+        self.label = QLabel(message)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setStyleSheet("""
+            QLabel {
+                font-size: 15px;
+                font-weight: 500;
+                color: #1e293b;
+            }
+        """)
+        layout.addWidget(self.label)
+        
+        # Animated dots
+        self.dots_label = QLabel('...')
+        self.dots_label.setAlignment(Qt.AlignCenter)
+        self.dots_label.setStyleSheet("""
+            QLabel {
+                font-size: 20px;
+                font-weight: bold;
+                color: #2563eb;
+            }
+        """)
+        layout.addWidget(self.dots_label)
+        
+        self.setLayout(layout)
+        
+        # Animate dots
+        self.dot_count = 0
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.animate_dots)
+        self.timer.start(300)
+        
+        # Style
+        self.setStyleSheet("""
+            QDialog {
+                background: white;
+                border-radius: 12px;
+                border: 2px solid #e2e8f0;
+            }
+        """)
+    
+    def animate_dots(self):
+        self.dot_count = (self.dot_count + 1) % 4
+        self.dots_label.setText('.' * (self.dot_count + 1))
+    
+    def closeEvent(self, event):
+        self.timer.stop()
+        super().closeEvent(event)
+
+
+class APIWorker(QThread):
+    finished = pyqtSignal(object)
+    error = pyqtSignal(str)
+    
+    def __init__(self, func, *args, **kwargs):
+        super().__init__()
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+    
+    def run(self):
+        try:
+            result = self.func(*self.args, **self.kwargs)
+            self.finished.emit(result)
+        except Exception as e:
+            self.error.emit(str(e))
 
 
 class MainWindow(QMainWindow):
@@ -17,7 +97,6 @@ class MainWindow(QMainWindow):
         self.client.set_auth(username, password)
         self.current_summary = None
         self.setWindowTitle('Chemical Equipment Parameter Visualizer')
-        self.setGeometry(100, 100, 1400, 900)
         self.settings = QSettings('ChemViz', 'Theme')
         self.is_dark = self.settings.value('dark_mode', False, type=bool)
         self.setup_styles()
@@ -132,11 +211,8 @@ class MainWindow(QMainWindow):
             QLabel#title {
                 font-size: 20px;
                 font-weight: 600;
-                color: #1e293b;
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #2563eb, stop:1 #7c3aed);
-                -webkit-background-clip: text;
-                color: transparent;
+                color: #0f172a;
+                background: none;
             }
             QFrame#card {
                 background: white;
@@ -149,7 +225,7 @@ class MainWindow(QMainWindow):
                 color: #64748b;
                 padding: 20px;
             }
-        """)
+        """
     
     def init_ui(self):
         central_widget = QWidget()
@@ -161,26 +237,38 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         
         header = QFrame()
+        header.setFrameShape(QFrame.NoFrame)
         header_layout = QHBoxLayout()
-        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setContentsMargins(20, 15, 20, 15)
+        header_layout.setSpacing(10)
         header.setLayout(header_layout)
         
-        title = QLabel('Chemical Equipment Visualizer')
-        title.setObjectName('title')
+        self.title_label = QLabel('Chemical Equipment Visualizer')
+        self.title_label.setObjectName('title')
         title_font = QFont()
         title_font.setPointSize(20)
         title_font.setWeight(QFont.Bold)
-        title.setFont(title_font)
-        header_layout.addWidget(title)
+        self.title_label.setFont(title_font)
+        # Explicitly set text color based on theme to prevent gradient issues
+        if self.is_dark:
+            self.title_label.setStyleSheet('color: #f1f5f9;')
+        else:
+            self.title_label.setStyleSheet('color: #1e293b;')
+        header_layout.addWidget(self.title_label)
         header_layout.addStretch()
         
         upload_btn = QPushButton('📤 Upload CSV')
         upload_btn.clicked.connect(self.upload_csv)
         header_layout.addWidget(upload_btn)
         
+        pdf_btn = QPushButton('📄 Download PDF')
+        pdf_btn.setObjectName('secondary')
+        pdf_btn.clicked.connect(self.download_pdf)
+        header_layout.addWidget(pdf_btn)
+        
         refresh_btn = QPushButton('🔄 Refresh')
         refresh_btn.setObjectName('secondary')
-        refresh_btn.clicked.connect(self.load_summary)
+        refresh_btn.clicked.connect(self.refresh_data)
         header_layout.addWidget(refresh_btn)
         
         self.theme_btn = QPushButton('🌙' if not self.is_dark else '☀️')
@@ -277,26 +365,101 @@ class MainWindow(QMainWindow):
     
     def create_table_tab(self):
         widget = QWidget()
+        widget.setAutoFillBackground(True)
         layout = QVBoxLayout()
-        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         widget.setLayout(layout)
         
         self.table = QTableWidget()
         self.table.setAlternatingRowColors(True)
-        self.table.setStyleSheet("""
-            QTableWidget {
-                background: white;
-            }
-            QTableWidget::item {
-                border: none;
-            }
-            QTableWidget::item:alternate {
-                background: #f8fafc;
-            }
-        """)
+        self.table.setShowGrid(True)
+        self.table.setFrameShape(QFrame.NoFrame)
+        self.table.verticalHeader().setVisible(False)  # Hide row numbers
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.update_table_style()
         layout.addWidget(self.table)
         
         return widget
+    
+    def update_table_style(self):
+        if self.is_dark:
+            self.table.setStyleSheet("""
+                QTableWidget {
+                    background-color: #1e293b;
+                    color: #f1f5f9;
+                    gridline-color: #334155;
+                    border: none;
+                }
+                QTableWidget::item {
+                    border: none;
+                    color: #f1f5f9;
+                    padding: 8px;
+                    background-color: transparent;
+                }
+                QTableWidget::item:alternate {
+                    background-color: #0f172a;
+                }
+                QTableWidget::item:selected {
+                    background-color: #334155;
+                    color: #60a5fa;
+                }
+                QHeaderView::section {
+                    background-color: #0f172a;
+                    color: #f1f5f9;
+                    padding: 12px;
+                    border: none;
+                    border-bottom: 1px solid #334155;
+                    border-right: 1px solid #334155;
+                    font-weight: 600;
+                }
+                QHeaderView::section:last {
+                    border-right: none;
+                }
+                QTableCornerButton::section {
+                    background-color: #0f172a;
+                    border: none;
+                }
+            """)
+        else:
+            self.table.setStyleSheet("""
+                QTableWidget {
+                    background-color: white;
+                    color: #1e293b;
+                    gridline-color: #e2e8f0;
+                    border: none;
+                }
+                QTableWidget::item {
+                    border: none;
+                    color: #1e293b;
+                    padding: 8px;
+                    background-color: transparent;
+                }
+                QTableWidget::item:alternate {
+                    background-color: #f8fafc;
+                }
+                QTableWidget::item:selected {
+                    background-color: #eff6ff;
+                    color: #2563eb;
+                }
+                QHeaderView::section {
+                    background-color: #f8fafc;
+                    color: #1e293b;
+                    padding: 12px;
+                    border: none;
+                    border-bottom: 1px solid #e2e8f0;
+                    border-right: 1px solid #e2e8f0;
+                    font-weight: 600;
+                }
+                QHeaderView::section:last {
+                    border-right: none;
+                }
+                QTableCornerButton::section {
+                    background-color: #f8fafc;
+                    border: none;
+                }
+            """)
     
     def create_charts_tab(self):
         widget = QWidget()
@@ -327,23 +490,79 @@ class MainWindow(QMainWindow):
         )
         
         if file_path:
-            try:
-                result = self.client.upload_csv(file_path)
+            progress = LoadingDialog('Uploading CSV file...', self)
+            progress.show()
+            QApplication.processEvents()
+            
+            self.worker = APIWorker(self.client.upload_csv, file_path)
+            
+            def on_upload_finished(result):
+                progress.close()
                 self.current_summary = result['summary']
                 self.update_ui()
-                QMessageBox.information(self, 'Success', 'CSV uploaded successfully')
-            except Exception as e:
-                QMessageBox.critical(self, 'Error', f'Upload failed: {str(e)}')
+                self.load_history(show_loading=False)
+                self.show_message(QMessageBox.Information, 'Success', 'CSV uploaded successfully')
+            
+            def on_upload_error(error):
+                progress.close()
+                self.show_message(QMessageBox.Critical, 'Error', f'Upload failed: {error}')
+            
+            self.worker.finished.connect(on_upload_finished)
+            self.worker.error.connect(on_upload_error)
+            self.worker.start()
     
-    def load_summary(self):
-        try:
-            data = self.client.get_summary()
+    def refresh_data(self):
+        """Refresh data with loading dialog"""
+        progress = LoadingDialog('Refreshing data...', self)
+        progress.show()
+        QApplication.processEvents()
+        
+        self.worker = APIWorker(self.client.get_summary)
+        
+        def on_refresh_finished(result):
+            progress.close()
+            if result:
+                self.current_summary = result['summary']
+                self.update_ui()
+                # Also refresh history
+                self.load_history(show_loading=False)
+                self.show_message(QMessageBox.Information, 'Success', 'Data refreshed successfully!')
+        
+        def on_refresh_error(error):
+            if hasattr(progress, 'close'):
+                progress.close()
+            self.show_message(QMessageBox.Warning, 'Error', f'Failed to refresh data: {error}')
+        
+        self.worker.finished.connect(on_refresh_finished)
+        self.worker.error.connect(on_refresh_error)
+        self.worker.start()
+    
+    def load_summary(self, show_loading=True):
+        if show_loading:
+            progress = LoadingDialog('Loading data...', self)
+            progress.show()
+            QApplication.processEvents()
+        else:
+            progress = None
+        
+        self.worker = APIWorker(self.client.get_summary)
+        
+        def on_summary_finished(data):
+            if progress:
+                progress.close()
             self.current_summary = data['summary']
             self.update_ui()
-            self.load_history()
-        except Exception as e:
+            self.load_history(show_loading=show_loading)
+        
+        def on_summary_error(error):
+            if progress:
+                progress.close()
             if hasattr(self, 'summary_label'):
-                self.summary_label.setText(f'No data available: {str(e)}')
+                self.summary_label.setText(f'No data available: {error}')
+        
+        self.worker.finished.connect(on_summary_finished)
+        self.worker.error.connect(on_summary_error)
+        self.worker.start()
     
     def update_ui(self):
         if not self.current_summary:
@@ -380,6 +599,7 @@ class MainWindow(QMainWindow):
             for col, header in enumerate(headers):
                 value = str(item.get(header, ''))
                 item_widget = QTableWidgetItem(value)
+                item_widget.setTextAlignment(Qt.AlignCenter)
                 self.table.setItem(row, col, item_widget)
         
         self.table.resizeColumnsToContents()
@@ -451,9 +671,19 @@ class MainWindow(QMainWindow):
         fig.tight_layout()
         self.chart_canvas.draw()
     
-    def load_history(self):
-        try:
-            history = self.client.get_history()
+    def load_history(self, show_loading=True):
+        if show_loading:
+            progress = LoadingDialog('Loading history...', self)
+            progress.show()
+            QApplication.processEvents()
+        else:
+            progress = None
+        
+        self.history_worker = APIWorker(self.client.get_history)
+        
+        def on_history_finished(history):
+            if progress:
+                progress.close()
             self.history_list.clear()
             
             for item in history:
@@ -467,5 +697,209 @@ class MainWindow(QMainWindow):
                 list_item = QListWidgetItem(text)
                 list_item.setFont(QFont('Segoe UI', 11))
                 self.history_list.addItem(list_item)
-        except Exception as e:
-            pass
+        
+        def on_history_error(error):
+            if progress:
+                progress.close()
+        
+        self.history_worker.finished.connect(on_history_finished)
+        self.history_worker.error.connect(on_history_error)
+        self.history_worker.start()
+    
+    def download_pdf(self):
+        if not self.current_summary:
+            self.show_message(QMessageBox.Warning, 'No Data', 'Please upload a CSV file first')
+            return
+        
+        # Calculate password for user information
+        total_count = self.current_summary.get('total_count', 0)
+        digit_sum = sum(int(digit) for digit in str(total_count))
+        pdf_password = f"equi{digit_sum}"
+        
+        # Select save location
+        save_path, _ = QFileDialog.getSaveFileName(
+            self, 'Save PDF Report', 'equipment_report.pdf', 'PDF Files (*.pdf)'
+        )
+        
+        if save_path:
+            progress = LoadingDialog('Generating PDF report...', self)
+            progress.show()
+            QApplication.processEvents()
+            
+            self.pdf_worker = APIWorker(self.client.download_pdf, save_path)
+            
+            def on_pdf_finished(result):
+                progress.close()
+                self.show_message(
+                    QMessageBox.Information,
+                    'Success',
+                    f'PDF report saved to:\n{save_path}\n\n'
+                    f'The PDF is password protected.\n'
+                    f'Password: {pdf_password}\n\n'
+                    f'(Formula: "equi" + sum of digits in equipment count {total_count})'
+                )
+            
+            def on_pdf_error(error):
+                progress.close()
+                self.show_message(QMessageBox.Critical, 'Error', f'Failed to generate PDF: {str(error)}')
+            
+            self.pdf_worker.finished.connect(on_pdf_finished)
+            self.pdf_worker.error.connect(on_pdf_error)
+            self.pdf_worker.start()
+    
+    def show_message(self, icon, title, text):
+        """Helper method to show message box with proper theming"""
+        msg = QMessageBox(self)
+        msg.setIcon(icon)
+        msg.setWindowTitle(title)
+        msg.setText(text)
+        if self.is_dark:
+            msg.setStyleSheet(
+                "QMessageBox { background-color: #0f172a; color: #f1f5f9; } "
+                "QLabel { color: #f1f5f9; } "
+                "QPushButton { color: #f1f5f9; background-color: #1e293b; border-radius: 6px; padding: 6px 16px; }"
+            )
+        else:
+            msg.setStyleSheet(
+                "QMessageBox { background-color: #ffffff; color: #1e293b; } "
+                "QLabel { color: #1e293b; } "
+                "QPushButton { color: #1e293b; }"
+            )
+        return msg.exec_()
+    
+    def toggle_theme(self):
+        self.is_dark = not self.is_dark
+        self.settings.setValue('dark_mode', self.is_dark)
+        self.theme_btn.setText('☀️' if self.is_dark else '🌙')
+        
+        # Update title color
+        if self.is_dark:
+            self.title_label.setStyleSheet('color: #f1f5f9;')
+        else:
+            self.title_label.setStyleSheet('color: #1e293b;')
+        
+        self.setup_styles()
+        self.update_table_style()
+        self.update_charts()
+    
+    def get_dark_styles(self):
+        return """
+            QMainWindow {
+                background-color: #0f172a;
+            }
+            QWidget {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 14px;
+                color: #f1f5f9;
+            }
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                    stop:0 #3b82f6, stop:1 #2563eb);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 24px;
+                font-weight: 500;
+                font-size: 15px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                    stop:0 #60a5fa, stop:1 #3b82f6);
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                    stop:0 #2563eb, stop:1 #1e40af);
+            }
+            QPushButton#secondary {
+                background: #1e293b;
+                color: #f1f5f9;
+                border: 1px solid #334155;
+            }
+            QPushButton#secondary:hover {
+                background: #334155;
+                border-color: #3b82f6;
+                color: #60a5fa;
+            }
+            QTabWidget::pane {
+                border: 1px solid #334155;
+                border-radius: 12px;
+                background: #1e293b;
+                padding: 16px;
+            }
+            QTabBar::tab {
+                background: #0f172a;
+                color: #94a3b8;
+                padding: 12px 24px;
+                margin-right: 4px;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
+                font-weight: 500;
+            }
+            QTabBar::tab:selected {
+                background: #1e293b;
+                color: #60a5fa;
+                border-bottom: 2px solid #3b82f6;
+            }
+            QTabBar::tab:hover {
+                background: #1e293b;
+            }
+            QTableWidget {
+                border: 1px solid #334155;
+                border-radius: 8px;
+                background: #1e293b;
+                gridline-color: #334155;
+                color: #f1f5f9;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                color: #f1f5f9;
+            }
+            QHeaderView::section {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                    stop:0 #1e293b, stop:1 #0f172a);
+                color: #f1f5f9;
+                padding: 12px;
+                border: none;
+                border-bottom: 1px solid #334155;
+                font-weight: 600;
+                font-size: 13px;
+                text-transform: uppercase;
+            }
+            QListWidget {
+                border: 1px solid #334155;
+                border-radius: 8px;
+                background: #1e293b;
+                color: #f1f5f9;
+            }
+            QListWidget::item {
+                padding: 16px;
+                border-bottom: 1px solid #334155;
+                border-radius: 8px;
+                margin: 4px;
+                color: #f1f5f9;
+            }
+            QListWidget::item:hover {
+                background: #334155;
+            }
+            QListWidget::item:selected {
+                background: #1e3a8a;
+                color: #60a5fa;
+            }
+            QLabel#title {
+                font-size: 20px;
+                font-weight: 600;
+                color: #f1f5f9;
+                background: none;
+            }
+            QFrame#card {
+                background: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 12px;
+                padding: 24px;
+            }
+            QLabel#summary-label {
+                font-size: 16px;
+                color: #94a3b8;
+                padding: 20px;
+            }
+        """

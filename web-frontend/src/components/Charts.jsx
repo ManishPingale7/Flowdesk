@@ -46,6 +46,29 @@ const Charts = ({ summary }) => {
     ],
   }
 
+  const pieOptions = {
+    plugins: {
+      legend: {
+        labels: {
+          font: {
+            size: 16,
+            weight: 'bold'
+          }
+        }
+      },
+      tooltip: {
+        titleFont: {
+          size: 16,
+          weight: 'bold'
+        },
+        bodyFont: {
+          size: 14,
+          weight: 'bold'
+        }
+      }
+    }
+  }
+
   const statisticsData = {
     labels: ['Flowrate', 'Pressure', 'Temperature'],
     datasets: [
@@ -63,23 +86,59 @@ const Charts = ({ summary }) => {
     ],
   }
 
+  const barOptions = {
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          font: {
+            size: 14,
+            weight: 'bold'
+          }
+        }
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 14,
+            weight: 'bold'
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        labels: {
+          font: {
+            size: 16,
+            weight: 'bold'
+          }
+        }
+      },
+      tooltip: {
+        titleFont: {
+          size: 16,
+          weight: 'bold'
+        },
+        bodyFont: {
+          size: 14,
+          weight: 'bold'
+        }
+      }
+    }
+  }
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
       <div>
         <h3>Equipment Type Distribution</h3>
-        <Pie data={typeDistributionData} />
+        <Pie data={typeDistributionData} options={pieOptions} />
       </div>
       <div>
         <h3>Average Statistics</h3>
         <Bar 
           data={statisticsData}
-          options={{
-            scales: {
-              y: {
-                beginAtZero: true
-              }
-            }
-          }}
+          options={barOptions}
         />
       </div>
     </div>

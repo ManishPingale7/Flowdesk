@@ -1,15 +1,73 @@
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
-                             QPushButton, QMessageBox, QFrame, QStackedWidget, QWidget)
-from PyQt5.QtCore import Qt, QSettings
+                             QPushButton, QMessageBox, QFrame, QStackedWidget, QWidget, QApplication)
+from PyQt5.QtCore import Qt, QSettings, QTimer
 from PyQt5.QtGui import QFont
 from api_client import APIClient
+
+
+class LoadingDialog(QDialog):
+    def __init__(self, message, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Loading')
+        self.setModal(True)
+        self.setFixedSize(300, 120)
+        self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        
+        layout = QVBoxLayout()
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+        
+        self.label = QLabel(message)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setStyleSheet("""
+            QLabel {
+                font-size: 15px;
+                font-weight: 500;
+                color: #1e293b;
+            }
+        """)
+        layout.addWidget(self.label)
+        
+        self.dots_label = QLabel('...')
+        self.dots_label.setAlignment(Qt.AlignCenter)
+        self.dots_label.setStyleSheet("""
+            QLabel {
+                font-size: 20px;
+                font-weight: bold;
+                color: #2563eb;
+            }
+        """)
+        layout.addWidget(self.dots_label)
+        
+        self.setLayout(layout)
+        
+        self.dot_count = 0
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.animate_dots)
+        self.timer.start(300)
+        
+        self.setStyleSheet("""
+            QDialog {
+                background: white;
+                border-radius: 12px;
+                border: 2px solid #e2e8f0;
+            }
+        """)
+    
+    def animate_dots(self):
+        self.dot_count = (self.dot_count + 1) % 4
+        self.dots_label.setText('.' * (self.dot_count + 1))
+    
+    def closeEvent(self, event):
+        self.timer.stop()
+        super().closeEvent(event)
 
 
 class AuthDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Chemical Equipment Visualizer')
-        self.setFixedSize(500, 600)
+        self.setFixedSize(550, 680)
         self.username = None
         self.password = None
         self.setup_styles()
@@ -94,24 +152,24 @@ class AuthDialog(QDialog):
     
     def init_ui(self):
         main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(40, 40, 40, 40)
+        main_layout.setContentsMargins(30, 30, 30, 30)
         main_layout.setSpacing(0)
         self.setLayout(main_layout)
         
         card = QFrame()
         card.setObjectName('card')
         card_layout = QVBoxLayout()
-        card_layout.setContentsMargins(48, 56, 48, 56)
+        card_layout.setContentsMargins(40, 40, 40, 40)
         card_layout.setSpacing(0)
         card.setLayout(card_layout)
         
         header = QVBoxLayout()
-        header.setSpacing(8)
+        header.setSpacing(12)
         
         title = QLabel('Chemical Equipment\nVisualizer')
         title.setObjectName('title')
         title.setAlignment(Qt.AlignCenter)
-        title_font = QFont('Segoe UI', 28, QFont.Bold)
+        title_font = QFont('Segoe UI', 24, QFont.Bold)
         title.setFont(title_font)
         title.setStyleSheet("color: #2563eb;")
         header.addWidget(title)
@@ -119,12 +177,12 @@ class AuthDialog(QDialog):
         self.subtitle = QLabel('Welcome back!')
         self.subtitle.setObjectName('subtitle')
         self.subtitle.setAlignment(Qt.AlignCenter)
-        subtitle_font = QFont('Segoe UI', 15)
+        subtitle_font = QFont('Segoe UI', 14)
         self.subtitle.setFont(subtitle_font)
         header.addWidget(self.subtitle)
         
         card_layout.addLayout(header)
-        card_layout.addSpacing(40)
+        card_layout.addSpacing(30)
         
         self.stacked = QStackedWidget()
         
@@ -141,11 +199,11 @@ class AuthDialog(QDialog):
     def create_login_widget(self):
         widget = QWidget()
         layout = QVBoxLayout()
-        layout.setSpacing(20)
+        layout.setSpacing(16)
         widget.setLayout(layout)
         
         username_container = QVBoxLayout()
-        username_container.setSpacing(8)
+        username_container.setSpacing(6)
         
         username_label = QLabel('Username')
         username_label.setObjectName('field-label')
@@ -160,7 +218,7 @@ class AuthDialog(QDialog):
         layout.addLayout(username_container)
         
         password_container = QVBoxLayout()
-        password_container.setSpacing(8)
+        password_container.setSpacing(6)
         
         password_label = QLabel('Password')
         password_label.setObjectName('field-label')
@@ -180,7 +238,7 @@ class AuthDialog(QDialog):
         login_btn.setCursor(Qt.PointingHandCursor)
         layout.addWidget(login_btn)
         
-        layout.addSpacing(24)
+        layout.addSpacing(16)
         
         footer = QHBoxLayout()
         footer.addStretch()
@@ -201,11 +259,13 @@ class AuthDialog(QDialog):
     def create_register_widget(self):
         widget = QWidget()
         layout = QVBoxLayout()
-        layout.setSpacing(20)
+        layout.setSpacing(16)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignTop)
         widget.setLayout(layout)
         
         username_container = QVBoxLayout()
-        username_container.setSpacing(8)
+        username_container.setSpacing(6)
         
         username_label = QLabel('Username')
         username_label.setObjectName('field-label')
@@ -220,7 +280,7 @@ class AuthDialog(QDialog):
         layout.addLayout(username_container)
         
         email_container = QVBoxLayout()
-        email_container.setSpacing(8)
+        email_container.setSpacing(6)
         
         email_label = QLabel('Email')
         email_label.setObjectName('field-label')
@@ -235,7 +295,7 @@ class AuthDialog(QDialog):
         layout.addLayout(email_container)
         
         password_container = QVBoxLayout()
-        password_container.setSpacing(8)
+        password_container.setSpacing(6)
         
         password_label = QLabel('Password')
         password_label.setObjectName('field-label')
@@ -251,7 +311,7 @@ class AuthDialog(QDialog):
         layout.addLayout(password_container)
         
         confirm_container = QVBoxLayout()
-        confirm_container.setSpacing(8)
+        confirm_container.setSpacing(6)
         
         confirm_label = QLabel('Confirm Password')
         confirm_label.setObjectName('field-label')
@@ -269,9 +329,10 @@ class AuthDialog(QDialog):
         register_btn = QPushButton('Sign Up')
         register_btn.clicked.connect(self.handle_register)
         register_btn.setCursor(Qt.PointingHandCursor)
+        register_btn.setMinimumHeight(46)
         layout.addWidget(register_btn)
         
-        layout.addSpacing(24)
+        layout.addSpacing(12)
         
         footer = QHBoxLayout()
         footer.addStretch()
@@ -286,6 +347,7 @@ class AuthDialog(QDialog):
         footer.addStretch()
         
         layout.addLayout(footer)
+        layout.addStretch()
         
         return widget
     
@@ -301,19 +363,25 @@ class AuthDialog(QDialog):
         password = self.login_password.text()
         
         if not username or not password:
-            QMessageBox.warning(self, 'Error', 'Please enter username and password')
+            self.show_message(QMessageBox.Warning, 'Error', 'Please enter username and password')
             return
+        
+        progress = LoadingDialog('Logging in...', self)
+        progress.show()
+        QApplication.processEvents()
         
         try:
             client = APIClient()
             client.set_auth(username, password)
             client.get_history()
             
+            progress.close()
             self.username = username
             self.password = password
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, 'Login Failed', f'Invalid credentials: {str(e)}')
+            progress.close()
+            self.show_message(QMessageBox.Critical, 'Login Failed', f'Invalid credentials: {str(e)}')
     
     def handle_register(self):
         username = self.register_username.text()
@@ -322,25 +390,31 @@ class AuthDialog(QDialog):
         password_confirm = self.register_password_confirm.text()
         
         if not username or not email or not password or not password_confirm:
-            QMessageBox.warning(self, 'Error', 'Please fill in all fields')
+            self.show_message(QMessageBox.Warning, 'Error', 'Please fill in all fields')
             return
         
         if password != password_confirm:
-            QMessageBox.warning(self, 'Error', 'Passwords do not match')
+            self.show_message(QMessageBox.Warning, 'Error', 'Passwords do not match')
             return
         
         if len(password) < 8:
-            QMessageBox.warning(self, 'Error', 'Password must be at least 8 characters')
+            self.show_message(QMessageBox.Warning, 'Error', 'Password must be at least 8 characters')
             return
+        
+        progress = LoadingDialog('Creating account...', self)
+        progress.show()
+        QApplication.processEvents()
         
         try:
             client = APIClient()
             client.register(username, email, password)
             
+            progress.close()
             self.username = username
             self.password = password
             self.accept()
         except Exception as e:
+            progress.close()
             error_msg = str(e)
             if hasattr(e, 'response') and e.response:
                 try:
@@ -350,8 +424,20 @@ class AuthDialog(QDialog):
                                              for k, v in error_data.items()])
                 except:
                     pass
-            QMessageBox.critical(self, 'Registration Failed', f'Registration failed: {error_msg}')
+            self.show_message(QMessageBox.Critical, 'Registration Failed', f'Registration failed: {error_msg}')
     
     def get_credentials(self):
         return self.username, self.password
+
+    def show_message(self, icon, title, text):
+        dialog = QMessageBox(self)
+        dialog.setIcon(icon)
+        dialog.setWindowTitle(title)
+        dialog.setText(text)
+        dialog.setStyleSheet(
+            'QMessageBox { background-color: #0f172a; border-radius: 12px; } '
+            'QLabel { color: #f1f5f9; font-size: 14px; } '
+            'QPushButton { color: #f1f5f9; font-weight: 600; background: #111827; border-radius: 6px; padding: 6px 14px; }'
+        )
+        return dialog.exec_()
 

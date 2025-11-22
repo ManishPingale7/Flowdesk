@@ -11,7 +11,7 @@ def main():
     if auth_dialog.exec_() == AuthDialog.Accepted:
         username, password = auth_dialog.get_credentials()
         main_window = MainWindow(username, password)
-        main_window.show()
+        main_window.showMaximized()
         sys.exit(app.exec_())
     else:
         sys.exit(0)

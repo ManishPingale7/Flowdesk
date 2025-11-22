@@ -116,6 +116,16 @@ def generate_pdf_report(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
+    # Generate password: first 4 letters of "equipment" + sum of total_count digits
+    base_name = "equipment_report"
+    first_four = base_name[:4]  # "equi"
+    
+    # Logic: sum of digits in total_count
+    total_count = summary.get('total_count', 0)
+    digit_sum = sum(int(digit) for digit in str(total_count))
+    
+    pdf_password = f"{first_four}{digit_sum}"
+    
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, 
                             rightMargin=72, leftMargin=72,
@@ -263,9 +273,25 @@ def generate_pdf_report(request):
     chart_img2 = Image(chart_buffer2, width=5*inch, height=3.3*inch)
     elements.append(chart_img2)
     
-    doc.build(elements)
+    # Build PDF with password protection
+    doc.build(elements, canvasmaker=lambda *args, **kwargs: EncryptedCanvas(pdf_password, *args, **kwargs))
     buffer.seek(0)
     
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="equipment_report.pdf"'
     return response
+
+
+# Custom Canvas class for PDF encryption
+from reportlab.pdfgen import canvas as pdfgen_canvas
+from reportlab.lib.pdfencrypt import StandardEncryption
+
+class EncryptedCanvas(pdfgen_canvas.Canvas):
+    def __init__(self, password, *args, **kwargs):
+        # Create encryption object
+        enc = StandardEncryption(password, password, canPrint=1, canModify=0, canCopy=0, canAnnotate=0)
+        kwargs['encrypt'] = enc
+        super().__init__(*args, **kwargs)
+    
+    def save(self):
+        super().save()

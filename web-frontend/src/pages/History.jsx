@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
-import { getHistory } from '../services/api'
+import { getHistory, getSummary, downloadPDF } from '../services/api'
 import './History.css'
 
 const History = ({ onLogout }) => {
@@ -25,6 +25,28 @@ const History = ({ onLogout }) => {
     }
   }
 
+  const handleDownloadPDF = async () => {
+    if (history.length === 0) {
+      setError('No data available to generate PDF')
+      return
+    }
+    
+    try {
+      // Get latest summary to calculate password for user information
+      const summaryData = await getSummary()
+      const totalCount = summaryData.summary?.total_count || 0
+      const digitSum = String(totalCount).split('').reduce((sum, digit) => sum + parseInt(digit), 0)
+      const pdfPassword = `equi${digitSum}`
+      
+      await downloadPDF()
+      alert(`PDF downloaded successfully!\n\nThe PDF is password protected.\nPassword: ${pdfPassword}\n\n(Formula: "equi" + sum of digits in equipment count ${totalCount})`)
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || 'Failed to download PDF'
+      setError(errorMsg)
+      alert(errorMsg)
+    }
+  }
+
   return (
     <div className="app">
       <nav className="nav">
@@ -34,6 +56,9 @@ const History = ({ onLogout }) => {
         <div className="nav-links">
           <Link to="/upload">Upload</Link>
           <Link to="/history">History</Link>
+          <button onClick={handleDownloadPDF} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
+            Download PDF
+          </button>
           <button onClick={toggleTheme} className="btn btn-secondary" style={{ marginLeft: '10px' }}>
             {isDark ? '☀️' : '🌙'}
           </button>
