@@ -5,31 +5,32 @@ const GlassFeatureGrid = () => {
   return (
     <div className="glass-container">
       <div className="glass-header">
-        <h2>Features built for ease of use</h2>
+        <h2>Features built for industrial precision</h2>
       </div>
 
       <div className="glass-grid">
-        {/* Card 1: Deduplication */}
+        {/* Card 1: Ingestion */}
         <div className="glass-card span-2">
           <div className="glass-card-content">
-            <h3>Deduplication with one click.</h3>
-            <p>Select the columns as primary keys and enjoy a fully managed processing without the need to tune memory or state management.</p>
+            <h3>Instant Data Ingestion.</h3>
+            <p>Upload your equipment logs instantly. Our system automatically parses standard CSV formats, validating headers and data types for immediate analysis.</p>
           </div>
-          <div className="visual-element visual-deduplicate">
-            <button className="btn-glass">Deduplicate</button>
+          <div className="visual-element visual-ingest">
             <div className="grid-mockup">
-              {[...Array(9)].map((_, i) => (
+              {[...Array(12)].map((_, i) => (
                 <div key={i} className="grid-cell"></div>
               ))}
             </div>
+            <div className="ingest-arrow">↓</div>
+            <div className="database-icon">🛢️</div>
           </div>
         </div>
 
-        {/* Card 2: 7 days checks */}
+        {/* Card 2: History */}
         <div className="glass-card">
           <div className="glass-card-content">
-            <h3>7 days deduplication checks.</h3>
-            <p>Auto detection of duplicates within 7 days after setup to ensure your data is always clean and storage is not exhausted.</p>
+            <h3>Historical Tracking.</h3>
+            <p>Keep a record of all your uploads. Compare datasets over time with our persistent history log.</p>
           </div>
           <div className="visual-element">
             <div className="circle-glow">
@@ -38,76 +39,75 @@ const GlassFeatureGrid = () => {
           </div>
         </div>
 
-        {/* Card 3: Batch Ingestions */}
+        {/* Card 3: Visualization */}
         <div className="glass-card span-2">
           <div className="glass-card-content">
-            <h3>Batch Ingestions built for ClickHouse.</h3>
-            <p>Select from ingestion logics like auto, size based or time window based.</p>
+            <h3>Interactive Visualization.</h3>
+            <p>Visualize flowrates, pressures, and temperatures with interactive dashboards. Spot anomalies and trends at a glance.</p>
           </div>
           <div className="visual-element">
-            {/* Abstract visual for batch ingestion */}
-            <div style={{ display: 'flex', gap: '10px', padding: '20px', alignItems: 'center' }}>
-               <div style={{ width: '40px', height: '40px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px' }}></div>
-               <div style={{ width: '40px', height: '40px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px' }}></div>
-               <div style={{ height: '1px', flex: 1, background: 'linear-gradient(90deg, rgba(255,255,255,0.2), transparent)' }}></div>
+            {/* Abstract visual for charts */}
+            <div style={{ display: 'flex', gap: '10px', padding: '20px', alignItems: 'end', height: '100%' }}>
+               <div style={{ width: '30px', height: '40%', background: 'rgba(249, 115, 22, 0.5)', borderRadius: '4px' }}></div>
+               <div style={{ width: '30px', height: '70%', background: 'rgba(139, 92, 246, 0.5)', borderRadius: '4px' }}></div>
+               <div style={{ width: '30px', height: '50%', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '4px' }}></div>
+               <div style={{ width: '30px', height: '80%', background: 'rgba(249, 115, 22, 0.5)', borderRadius: '4px' }}></div>
             </div>
           </div>
         </div>
 
-        {/* Card 4: Joins */}
-        <div className="glass-card span-2">
+        {/* Card 4: Distribution (Moved) */}
+        <div className="glass-card">
           <div className="glass-card-content">
-            <h3>Joins, simplified.</h3>
-            <p>Define the fields of the streams that you would like to join and GlassFlow handles execution and state management automatically.</p>
+            <h3>Equipment Distribution.</h3>
+            <p>Automatically categorize and visualize your equipment types (Pumps, Valves, Reactors) with dynamic charts.</p>
+          </div>
+          <div className="visual-element">
+             <div style={{ padding: '20px', display: 'flex', justifyContent: 'center' }}>
+               <div style={{ 
+                 width: '60px', 
+                 height: '60px', 
+                 borderRadius: '50%', 
+                 border: '4px solid rgba(249, 115, 22, 0.6)',
+                 borderRightColor: 'rgba(139, 92, 246, 0.6)',
+                 borderBottomColor: 'rgba(255, 255, 255, 0.2)'
+               }}></div>
+             </div>
+          </div>
+        </div>
+
+        {/* Card 5: Reporting (Moved & Resized) */}
+        <div className="glass-card">
+          <div className="glass-card-content">
+            <h3>Comprehensive Reporting.</h3>
+            <p>Generate professional PDF reports for stakeholders. Share insights with a single click.</p>
           </div>
           <div className="visual-element" style={{ position: 'relative' }}>
              <div className="gradient-orb"></div>
              <div style={{ 
                position: 'absolute', 
                top: '50%', 
-               left: '40%', 
-               width: '80px', 
+               left: '50%', 
+               width: '60px', 
                height: '80px', 
-               borderRadius: '50%', 
-               border: '1px solid rgba(255,255,255,0.1)',
-               background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.1), transparent)',
-               transform: 'translate(-50%, -50%)'
-             }}></div>
-             <div style={{ 
-               position: 'absolute', 
-               top: '50%', 
-               left: '60%', 
-               width: '80px', 
-               height: '80px', 
-               borderRadius: '50%', 
-               border: '1px solid rgba(168, 85, 247, 0.1)',
-               background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), transparent)',
+               borderRadius: '4px', 
+               border: '1px solid rgba(255,255,255,0.2)',
+               background: 'rgba(255,255,255,0.05)',
                transform: 'translate(-50%, -50%)',
-               mixBlendMode: 'screen'
-             }}></div>
-          </div>
-        </div>
-
-        {/* Card 5: Stateful Processing */}
-        <div className="glass-card">
-          <div className="glass-card-content">
-            <h3>Stateful Processing.</h3>
-            <p>Built-in lightweight state store enables low-latency, in-memory deduplication and joins with context retention.</p>
-          </div>
-          <div className="visual-element">
-             <div style={{ padding: '20px' }}>
-               <div style={{ height: '8px', width: '100%', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', marginBottom: '8px' }}></div>
-               <div style={{ height: '8px', width: '70%', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', marginBottom: '8px' }}></div>
-               <div style={{ height: '8px', width: '40%', background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}></div>
+               display: 'flex',
+               alignItems: 'center',
+               justifyContent: 'center'
+             }}>
+                <span style={{ fontSize: '24px' }}>📄</span>
              </div>
           </div>
         </div>
 
-        {/* Card 6: Managed Kafka */}
+        {/* Card 6: Analytics */}
         <div className="glass-card">
           <div className="glass-card-content">
-            <h3>Managed Kafka and ClickHouse Connector.</h3>
-            <p>Built and updated by GlassFlow team. Data inserts with a declared schema and schemaless.</p>
+            <h3>Real-time Analytics.</h3>
+            <p>Calculate average flowrates, pressures, and temperatures instantly. Get a snapshot of your plant's health.</p>
           </div>
           <div className="visual-element" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
              <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -116,11 +116,11 @@ const GlassFeatureGrid = () => {
           </div>
         </div>
 
-        {/* Card 7: Auto Scaling */}
+        {/* Card 7: Performance */}
         <div className="glass-card">
           <div className="glass-card-content">
-            <h3>Auto Scaling of Workers.</h3>
-            <p>Our Kafka connector will trigger based on partitions new workers and make sure that execution runs efficient.</p>
+            <h3>Performance Metrics.</h3>
+            <p>Track key performance indicators across all your equipment to ensure optimal operation efficiency.</p>
           </div>
           <div className="visual-element">
             <div className="bar-chart">

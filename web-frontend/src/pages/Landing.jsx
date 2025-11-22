@@ -16,8 +16,8 @@ const Landing = () => {
       </nav>
       
       <header className="hero-section">
-        <h1>Data Processing Simplified</h1>
-        <p>Build powerful data pipelines with ease.</p>
+        <h1>Chemical Data Intelligence, Simplified.</h1>
+        <p>Transform raw equipment logs into actionable insights. Visualize flowrates, pressures, and temperatures with precision.</p>
       </header>
 
       <section className="features-section">
